@@ -13,6 +13,8 @@ The project uses the following main dependencies:
 
 - **bcrypt**– Password hashing
 
+- **jsonwebtoken** - Acess token
+
 ## Getting started 
 ### Prerequisites
 Make sure you have the following installed:

@@ -9,6 +9,10 @@ class UserRepository{
         return await user.findByPk(id)
     }
 
+    async findByEmail(email){
+        return await user.findOne({where: {email: email}})
+    }
+
     async findAll(){
         return user.findAll();
     }
