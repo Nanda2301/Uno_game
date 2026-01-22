@@ -9,7 +9,7 @@ class UserService{
         return UserRepository.findById(id);
     }
 
-    async fidnAll(){
+    async findAll(){
         return UserRepository.findAll();
     }
 
