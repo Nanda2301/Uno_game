@@ -11,9 +11,9 @@ The project uses the following main dependencies:
 
 - **sqlite3** – Lightweight relational database
 
-- **bcrypt**– Password hashing
+- **bcrypt** – Password hashing
 
-- **jsonwebtoken** - Acess token
+- **jsonwebtoken** – Acess token
 
 ## Getting started 
 ### Prerequisites
@@ -58,8 +58,10 @@ Base URL: `/uno/users`
 
 #### Get All Users
 **Method:** `GET`
-**Endpoint:** `/uno/users/all`
+**Endpoint:** `/uno/users/`
+
 **Succedd Response**
+
 **Status:** `200 OK`
 ```
 [
@@ -81,3 +83,11 @@ Base URL: `/uno/users`
     }
 ]
 ```
+
+#### POST Create user
+**Method:** `POST` 
+**Endpoint:** `uno/users/login` 
+
+**Succedd Response**
+
+**Status:** `200 OK`
