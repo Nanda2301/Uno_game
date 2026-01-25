@@ -2,21 +2,18 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
 
 const Game = sequelize.define("Game", {
-    name: {
-        type: DataTypes.STRING(100),
+    title: {
+        type: DataTypes.STRING,
         allowNull: false
     },
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: true
+    status: {
+        type: DataTypes.STRING, 
+        allowNull: false,
+        defaultValue: 'active'
     },
-    price: {
-        type: DataTypes.FLOAT,
+    maxPlayers: {
+        type: DataTypes.INTEGER,
         allowNull: false
-    },
-    releaseDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: true
     }
 });
 
