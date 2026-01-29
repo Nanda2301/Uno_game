@@ -3,8 +3,13 @@ const userService = require("../services/UserService.js");
 class UserController{
     async create(req, res, next){
         try {
-            const user = await userService.create(req.body);
-            res.status(201).json(user);
+            const result = await userService.create(req.body);
+
+            if(result.error){
+                res.status(400).json(result);
+            }
+            
+            res.status(201).json(result);
         } catch(error){
             next(error);
         }

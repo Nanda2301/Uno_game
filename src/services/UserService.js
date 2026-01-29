@@ -4,7 +4,38 @@ const bcrypt = require("bcrypt")
 
 class UserService{
     async create(data){
-        return UserRepository.create(data);
+        // Validations
+        if(data === undefined) {
+            return { message: "Tem que enviar dados", error: true }
+        }
+
+        if(!data.name){
+            return { message: "Tem que enviar o nome", error: true }
+        }
+
+        if(!data.userName){
+            return { message: "Tem que enviar o nome de usuário", error: true }
+        }
+
+        if(!data.password) {
+            return { message: "Tem que enviar o password", error: true }
+        }
+
+        if(!data.email) {
+            return { message: "Tem que enviar o email", error: true }
+        }
+
+        if(await UserRepository.emailExist(data.email)) {
+            return { message: "Não pode repetir o email de outro usuario", error: true }
+        }
+
+        // If validation failure
+        // return error
+
+        // If validation pass
+        const user = await UserRepository.create(data)
+
+        return {...user, error: false };
     }
 
     async findById(id){
