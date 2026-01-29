@@ -9,8 +9,6 @@ app.use(express.json());
 
 app.use("/api", routes)
 
-app.use("/uno", routes);
-
 app.use("/uno/games", routes); 
 app.use("/uno/cards", cardRoutes);
 app.use(errorMiddleware)

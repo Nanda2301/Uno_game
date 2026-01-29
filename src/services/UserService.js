@@ -13,6 +13,10 @@ class UserService{
             return { message: "Tem que enviar o nome", error: true }
         }
 
+        if(!data.userName){
+            return { message: "Tem que enviar o nome de usuário", error: true }
+        }
+
         if(!data.password) {
             return { message: "Tem que enviar o password", error: true }
         }
