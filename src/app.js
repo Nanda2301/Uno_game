@@ -7,6 +7,8 @@ const app = express();
 
 app.use(express.json());
 
+app.use("/api", routes)
+
 app.use("/uno", routes);
 
 app.use("/uno/games", routes); 

@@ -2,7 +2,11 @@ const user = require("../models/User.js");
 
 class UserRepository{
     async create(data){
-        return await user.create(data)
+        const newUser = await user.create(data)
+        return {
+            name: newUser.name,
+            email: newUser.email
+        }
     } 
     
     async findById(id){
@@ -14,11 +18,22 @@ class UserRepository{
     }
 
     async findAll(){
-        return user.findAll();
+        const users = await user.findAll();
+        return users.map(x => ({
+            name: x.name,
+            email: x.email,
+            createdAt: x.createdAt,
+            updatedAt: x.updatedAt,
+        }))
     }
 
     async delete(user){
         return await user.destroy()
+    }
+
+    async emailExist(email) {
+        const user = await this.findByEmail(email);
+        return user !== null
     }
 }
 
