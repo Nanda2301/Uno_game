@@ -1,6 +1,18 @@
 const GameRepository = require("../repositories/GameRepository");
+const CardService = require('./CardService');
 
 class GameService {
+    async create(gameData) {
+        // Cria o jogo no banco
+        const game = await GameRepository.create(gameData);
+
+        // Gera as cartas para o jogo automaticamente
+        const cardService = new CardService();
+        await cardService.createDeck(game.id);
+
+        return game;
+    }
+
     async create(data) {
         return await GameRepository.create(data);
     }
