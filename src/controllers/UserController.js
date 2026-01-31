@@ -1,11 +1,15 @@
 const userService = require("../services/UserService.js");
 
 class UserController {
-    
     async create(req, res, next) {
         try {
-            const user = await userService.create(req.body);
-            res.status(201).json(user);
+            const result = await userService.create(req.body);
+
+            if (result.error) {
+                return res.status(400).json(result);
+            }
+
+            res.status(201).json(result);
         } catch (error) {
             next(error);
         }
@@ -25,15 +29,10 @@ class UserController {
 
     async update(req, res, next) {
         try {
-            const { id } = req.params;
-            const { name, age, email } = req.body;
-            // Chama o service em vez de chamar o Repository ou Model direto
-            const updatedUser = await userService.update(id, { name, age, email });
-
+            const updatedUser = await userService.update(req.params.id, req.body);
             if (!updatedUser) {
                 return res.status(404).json({ message: "User not found" });
             }
-
             return res.status(200).json(updatedUser);
         } catch (error) {
             next(error);
@@ -43,9 +42,6 @@ class UserController {
     async findAll(req, res, next) {
         try {
             const users = await userService.findAll();
-            if (!users) {
-                return res.status(404).json({ error: "Users not found" });
-            }
             return res.status(200).json(users);
         } catch (error) {
             next(error);
@@ -67,10 +63,8 @@ class UserController {
     async login(req, res, next) {
         try {
             const { password, email } = req.body;
-
             const { status, ...rest } = await userService.login(email, password);
             return res.status(status).json(rest);
-
         } catch (error) {
             next(error);
         }

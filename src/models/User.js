@@ -7,12 +7,10 @@ const User = sequelize.define("User", {
         type: DataTypes.STRING(40),
         allowNull: false
     },
-    age: {
-        type: DataTypes.INTEGER,
+    userName: {
+        type: DataTypes.STRING(40),
         allowNull: false,
-        validate: {
-            min: 0 // Evita idades negativas
-        }
+        unique: true
     },
     email: {
         type: DataTypes.STRING(70),
@@ -27,20 +25,16 @@ const User = sequelize.define("User", {
         allowNull: false
     }
 }, {
-    // 2. SEGURANÇA: Nunca retorna a senha nas buscas (find, get, etc.)
     defaultScope: {
         attributes: { exclude: ['password'] }
     }
 });
 
-// Hook para criar a hash antes de CRIAR o usuário
 User.beforeCreate(async (user) => {
     const salt = 10;
     user.password = await bcrypt.hash(user.password, salt);
 });
 
-// 3. Hook para criar a hash antes de ATUALIZAR o usuário
-// Se for preciso mudar a senha no futuro, isso garante que ela seja criptografada
 User.beforeUpdate(async (user) => {
     if (user.changed('password')) {
         const salt = 10;
