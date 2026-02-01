@@ -9,11 +9,16 @@ const Game = sequelize.define("Game", {
     status: {
         type: DataTypes.STRING, 
         allowNull: false,
-        defaultValue: 'active'
+        defaultValue: 'waiting' // waiting | in_progress | finished
     },
     maxPlayers: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    creatorId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        field: 'creator_id' // Nome da coluna no banco
     }
 });
 
