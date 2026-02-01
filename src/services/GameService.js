@@ -111,7 +111,20 @@ class GameService {
 
         return novoJogador;
     }
+    
+    async distribuirCartas(gameId) {
+        const jogadores =
+        await GamePlayerRepository.findByGameId(gameId);
 
+        for (const jogador of jogadores) {
+            for (let i = 0; i < 7; i++) {
+              await CardService.drawToPlayer(
+                gameId,
+                jogador.playerId
+            );
+        }
+    }
+}
     /**
      * Marcar jogador como pronto
      */
@@ -154,12 +167,21 @@ class GameService {
         }
 
         // Atualiza status do jogo
-        await GameRepository.update(game, { status: 'in_progress' });
+        await GameRepository.update(game, {
+            status: 'in_progress'
+        });
 
-        return { 
-            message: 'Jogo iniciado com sucesso!',
-            game: { ...game.toJSON(), status: 'in_progress' }
-        };
+        // distribui cartas
+        await this.distribuirCartas(game.id);
+
+        // compra a primeira carta do baralho
+        const primeiraCarta = await CardService.drawCard(game.id);
+        // define como topo
+        await GameRepository.update(game, {
+        topDiscardCardId: primeiraCarta.id
+        });
+
+        
     }
 
     /**
@@ -192,6 +214,81 @@ class GameService {
             game: { ...game.toJSON(), status: 'finished' }
         };
     }
+
+    async abandonarJogo(gameId, playerId) {
+        const game = await GameRepository.findById(gameId);
+        if (!game) return { error: 'Jogo não encontrado' };
+
+        const jogador = await GamePlayerRepository.findOne(gameId, playerId);
+        if (!jogador) return { error: 'Jogador não está na partida' };
+
+        const jogadores = await GamePlayerRepository.findByGameId(gameId);
+        // Remove jogador
+        await GamePlayerRepository.delete(jogador);
+        const restantes = jogadores.filter(j => j.playerId !== playerId);
+        // Se sobrar apenas 1 → W.O.
+        if (restantes.length <= 1 && game.status === 'in_progress') {
+        await GameRepository.update(game, { status: 'finished' });
+        
+        return {
+            message: 'Partida encerrada por W.O.'
+        };
+      }
+    
+    // Se era o criador → transfere
+     
+        if (game.creatorId === playerId) {
+            await GameRepository.update(game, {
+            creatorId: restantes[0].playerId
+        });
+      }
+
+    // Ajusta turno se necessário
+    
+        if (jogador.position === game.currentPlayerPosition) {
+        await this.proximoTurno(gameId);
+     }
+
+      return { message: 'Jogador abandonou a partida' };
+    }
+
+    async jogadorDaVez(gameId) {
+    const game = await GameRepository.findById(gameId);
+
+    const jogador = await GamePlayerRepository.findByPosition(
+        gameId,
+        game.currentPlayerPosition
+      );
+
+       return jogador;
+    }
+
+    async proximoTurno(gameId) {
+        const game = await GameRepository.findById(gameId);
+
+        const jogadores = await GamePlayerRepository.findByGameId(gameId);
+        const total = jogadores.length;
+        let novaPosicao =
+        game.currentPlayerPosition + game.direction;
+        if (novaPosicao > total) novaPosicao = 1;
+        if (novaPosicao < 1) novaPosicao = total;
+        await GameRepository.update(game, {
+        currentPlayerPosition: novaPosicao
+       });
+       return novaPosicao;
+    }
+
+
+    async topoDescarte(gameId) {
+      const game = await GameRepository.findById(gameId);
+
+       return await CardRepository.findById(
+        game.topDiscardCardId
+      );
+    }
+
+
+
 
     async update(id, data) {
         const game = await GameRepository.findById(id);

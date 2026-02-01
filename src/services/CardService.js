@@ -143,6 +143,21 @@ class CardService {
         return true;
     }
 
+    async drawCard(gameId) {
+    const card = await CardRepository.findOne({
+        where: {
+            gameId,
+            pile: 'draw'
+        }
+    });
+
+    await CardRepository.update(card, {
+        pile: 'discard'
+    });
+
+    return card;
+}
+
     /**
      * Expondo a função de validação (currying)
      */

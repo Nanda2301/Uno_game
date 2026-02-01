@@ -20,7 +20,7 @@ const GamePlayer = sequelize.define("GamePlayer", {
     },
     position: {
         type: DataTypes.INTEGER, // Posição na mesa (1, 2, 3, 4)
-        allowNull: true
+        allowNull: false
     }
 });
 

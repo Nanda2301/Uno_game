@@ -1,4 +1,4 @@
-const GamePlayer = require("../models/GamePlayer");
+const GamePlayer = require("../models/GamePlayer.js");
 
 class GamePlayerRepository {
     async create(data) {
@@ -20,6 +20,12 @@ class GamePlayerRepository {
         });
     }
 
+    async findByPosition(gameId, position) {
+      return await GamePlayer.findOne({
+        where: { gameId, position }
+      });
+    }
+
     async update(gamePlayer, data) {
         return await gamePlayer.update(data);
     }
@@ -33,6 +39,12 @@ class GamePlayerRepository {
             where: { gameId }
         });
     }
+
+    async delete(gamePlayer) { return await gamePlayer.destroy(); }
+
+    
+
+
 }
 
 module.exports = new GamePlayerRepository();
