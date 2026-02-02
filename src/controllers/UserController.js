@@ -69,6 +69,21 @@ class UserController {
             next(error);
         }
     }
+
+    async aboutMe(req, res, next){
+        try {
+            const user = await userService.findById(req.userId);
+
+            if (!user) {
+            return res.status(404).json({ error: "Usuário não encontrado" });
+            }
+
+            return res.json(user);
+        } catch (err) {
+            next(err)
+        }
+
+    }
 }
 
 module.exports = new UserController();
