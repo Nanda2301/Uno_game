@@ -1,65 +1,72 @@
 const userService = require("../services/UserService.js");
 
-class UserController{
-    async create(req, res, next){
+class UserController {
+    async create(req, res, next) {
         try {
             const result = await userService.create(req.body);
 
-            if(result.error){
-                res.status(400).json(result);
+            if (result.error) {
+                return res.status(400).json(result);
             }
-            
+
             res.status(201).json(result);
-        } catch(error){
+        } catch (error) {
             next(error);
         }
     }
 
-    async getById(req, res, next){
+    async getById(req, res, next) {
         try {
             const user = await userService.findById(req.params.id);
-            if(!user){
-                return res.status(404).json({error: "User not found"});
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
             }
             return res.status(200).json(user);
-        } catch (error){
+        } catch (error) {
             next(error);
         }
     }
 
-    async findAll(req, res, next){
+    async update(req, res, next) {
         try {
-            const user = await userService.findAll();
-            if(!user){
-                return res.status(404).json({error: "User not found"});
+            const updatedUser = await userService.update(req.params.id, req.body);
+            if (!updatedUser) {
+                return res.status(404).json({ message: "User not found" });
             }
-            return res.status(200).json(user);
-        } catch (error){
+            return res.status(200).json(updatedUser);
+        } catch (error) {
             next(error);
         }
     }
 
-    async delete(req, res, next){
+    async findAll(req, res, next) {
+        try {
+            const users = await userService.findAll();
+            return res.status(200).json(users);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async delete(req, res, next) {
         try {
             const deleted = await userService.delete(req.params.id);
-            if(!deleted){
-                return res.status(404).json({error: "User not found"});
+            if (!deleted) {
+                return res.status(404).json({ error: "User not found" });
             }
             return res.status(204).send();
-        } catch (error){
-            next(error)
+        } catch (error) {
+            next(error);
         }
     }
 
-    async login(req, res, next){
-        try{
-            const {password, email} = req.body
-            console.log(password)
-            const {status, ...rest} = await userService.login(email, password)
-            return res.status(status).json(rest)
-
-        }catch(error){
-            next(error)
+    async login(req, res, next) {
+        try {
+            const { password, email } = req.body;
+            const { status, ...rest } = await userService.login(email, password);
+            return res.status(status).json(rest);
+        } catch (error) {
+            next(error);
         }
     }
 }

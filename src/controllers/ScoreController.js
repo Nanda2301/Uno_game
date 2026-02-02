@@ -4,9 +4,11 @@ class ScoreController {
     async create(req, res, next) {
         try {
             const score = await scoreService.create(req.body);
-            // O Sequelize retorna o objeto criado, que já inclui o 'createdAt' (timestamp)
             res.status(201).json(score);
         } catch (error) {
+            if (error.message.includes('incompletos')) {
+                return res.status(400).json({ error: error.message });
+            }
             next(error);
         }
     }
@@ -27,6 +29,43 @@ class ScoreController {
                 return res.status(404).json({ error: "Score not found" });
             }
             res.status(200).json(score);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * GET /scores/ranking - Ranking geral
+     */
+    async obterRanking(req, res, next) {
+        try {
+            const ranking = await scoreService.obterRankingGeral();
+            res.status(200).json(ranking);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * GET /scores/top10 - Top 10 jogadores
+     */
+    async obterTop10(req, res, next) {
+        try {
+            const top10 = await scoreService.obterTop10();
+            res.status(200).json(top10);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * GET /scores/player/:playerId - Estatísticas de jogador
+     */
+    async obterEstatisticasJogador(req, res, next) {
+        try {
+            const playerId = parseInt(req.params.playerId);
+            const stats = await scoreService.obterEstatisticasJogador(playerId);
+            res.status(200).json(stats);
         } catch (error) {
             next(error);
         }

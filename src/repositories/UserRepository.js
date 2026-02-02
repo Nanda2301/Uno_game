@@ -21,7 +21,9 @@ class UserRepository{
     }
 
     async findByEmail(email){
-        return await user.findOne({where: {email: email}})
+        return await user.findOne({where: {email: email},
+        attributes: { include: ['password'] } // Força o retorno da senha para comparação
+        });
     }
 
     async findAll(){

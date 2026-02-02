@@ -1,0 +1,27 @@
+const { DataTypes } = require("sequelize");
+const sequelize = require("../database");
+
+// Tabela intermediária para jogadores em uma partida
+const GamePlayer = sequelize.define("GamePlayer", {
+    gameId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        field: 'game_id'
+    },
+    playerId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        field: 'player_id'
+    },
+    ready: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    position: {
+        type: DataTypes.INTEGER, // Posição na mesa (1, 2, 3, 4)
+        allowNull: false
+    }
+});
+
+module.exports = GamePlayer;

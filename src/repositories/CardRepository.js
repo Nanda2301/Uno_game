@@ -17,6 +17,11 @@ class CardRepository {
         return await card.update(data);
     }
 
+    async createMany(cardsData) {
+        // bulkCreate insere um array de objetos de uma só vez no banco
+        return await Card.bulkCreate(cardsData);
+    }
+
     async delete(card) {
         return await card.destroy();
     }

@@ -1,22 +1,22 @@
-const {DataTypes} = require("sequelize");
+const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
-const bcrypt = require("bcrypt")
+const bcrypt = require("bcrypt");
 
 const User = sequelize.define("User", {
     name: {
         type: DataTypes.STRING(40),
         allowNull: false
     },
-    userName:{
+    userName: {
         type: DataTypes.STRING(40),
         allowNull: false,
         unique: true
     },
-    email:{
+    email: {
         type: DataTypes.STRING(70),
         allowNull: false,
         unique: true,
-        validate:{
+        validate: {
             isEmail: true
         }
     },
@@ -24,11 +24,22 @@ const User = sequelize.define("User", {
         type: DataTypes.STRING(64),
         allowNull: false
     }
-})
+}, {
+    defaultScope: {
+        attributes: { exclude: ['password'] }
+    }
+});
 
-User.beforeCreate(async (user)=>{
-    const salt = 10
-    user.password = await bcrypt.hash(user.password, salt)
-})
+User.beforeCreate(async (user) => {
+    const salt = 10;
+    user.password = await bcrypt.hash(user.password, salt);
+});
+
+User.beforeUpdate(async (user) => {
+    if (user.changed('password')) {
+        const salt = 10;
+        user.password = await bcrypt.hash(user.password, salt);
+    }
+});
 
 module.exports = User;
