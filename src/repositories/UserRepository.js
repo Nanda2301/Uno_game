@@ -11,13 +11,15 @@ class UserRepository{
     
     async findById(id){
         const result =  (await user.findByPk(id)).get({plain: true})
-        console.log(result)
-        return {
-            name: result.name,
-            email: result.email,
-            createdAt: result.createdAt,
-            updatedAt: result.updatedAt,
+        if(result){
+            return {
+                name: result.name,
+                email: result.email,
+                createdAt: result.createdAt,
+                updatedAt: result.updatedAt,
+            }
         }
+        return {}
     }
 
     async findByEmail(email){
