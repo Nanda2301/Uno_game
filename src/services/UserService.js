@@ -67,6 +67,14 @@ class UserService {
 
         return { status: 200, token };
     }
+
+    async findById(id) {
+        try {
+            return await UserRepository.findById(id);
+        } catch (error) {
+            throw new Error("Erro ao buscar perfil");
+        }
+    }
 }
 
 module.exports = new UserService();
