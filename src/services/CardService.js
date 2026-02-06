@@ -65,8 +65,8 @@ const gerarCartasPretas = (gameId) => {
 
 const CardFunctor = (value) => ({
     value,
-    map: (fn) => CardFunctor(fn(value)),
-    join: () => value 
+    map: (fn) => (value === null || value === undefined ? CardFunctor(null) : CardFunctor(fn(value))),
+    join: () => value
 });
 class CardService {
 
@@ -90,23 +90,25 @@ class CardService {
         return await CardRepository.create(data);
     }
 
-    async findById(id) { 
+    async findAll() {
+        return await CardRepository.findAll();
+    }
+
+    async findById(id) {
+        if (!id) return null;
         const card = await CardRepository.findById(id);
         
         if (!card) return null;
 
         return CardFunctor(card)
-            .map(c => {
-                const plainCard = c.get({ plain: true }); 
-                return {
-                    ...plainCard,
-                    nomeExibicao: `${plainCard.color} ${plainCard.value}`,
-                    processadoEm: new Date().toISOString()
-                };
-            })
+            .map(c => (typeof c.get === 'function' ? c.get({ plain: true }) : c))
+            .map(c => ({
+                ...c,
+                label: `${c.color.toUpperCase()} - ${c.value}`, 
+                viewedAt: new Date().toISOString()
+            }))
             .join();
     }
-
     async findById(id) {
         return await CardRepository.findById(id);
     }
