@@ -5,9 +5,9 @@ const jwt = require("jsonwebtoken");
  * 
  * @returns token JWT for test
  */
-module.exports =  function generateTestToken() {
+module.exports =  function generateTestToken(testId=1, testEmail="test@gmail.com") {
   return jwt.sign(
-    { id: 1, email: "test@gmail.com" },
+    { id: testId, email: testEmail },
     process.env.JWT_SECRET || "test_secret",
     { expiresIn: "1h" }
   );
