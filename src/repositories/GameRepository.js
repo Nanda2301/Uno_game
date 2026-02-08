@@ -1,4 +1,5 @@
 const Game = require("../models/Game.js");
+const GamePlayer = require("../models/GamePlayer.js")
 
 class GameRepository {
     async create(data) {
@@ -10,7 +11,20 @@ class GameRepository {
     }
 
     async findById(id) {
-        return await Game.findByPk(id);
+        return await Game.findByPk(id, {
+            include: [
+                {
+                    model: GamePlayer,
+                    as: "players",
+                    attributes: [
+                        "playerId",
+                        "ready",
+                        "position"
+                    ]
+                }
+                
+            ]
+        });
     }
 
     async update(game, data) {

@@ -4,7 +4,7 @@ class GameController {
     async create(req, res, next) {
         try {
             // Assume que userId vem do token JWT (middleware de autenticação)
-            const creatorId = req.userId || req.body.creatorId;
+            const creatorId = req.userId;
             
             if (!creatorId) {
                 return res.status(400).json({ 
