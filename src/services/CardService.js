@@ -117,7 +117,7 @@ class CardService {
         const card = await CardRepository.findById(id);
         if (!card) return null;
 
-        return await CardRepository.update(card, data);
+        return await CardRepository.update(id, data);
     }
 
     async delete(id) {
