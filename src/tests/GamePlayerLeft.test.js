@@ -19,7 +19,7 @@ createGame = async()=>{
     return response
 }
 
-describe("/POST api/games/:gameId/join", ()=>{
+describe("/POST api/games/:gameId/ready", ()=>{
     beforeAll(async ()=>{
         await sequelize.sync({force:true}) // Reinicia o banco de dados, criando 
                                           // todas a tabelas do zero
@@ -28,32 +28,23 @@ describe("/POST api/games/:gameId/join", ()=>{
         await sequelize.close() // Fecha conexão com banco de dados e libera memória
     })
 
-
-    test("The user with a valid token can join in a existing game", async()=>{
+    test("User that joined on game can change status to 'ready'", async()=>{
         const resultGameCreated = await createGame()
         expect(resultGameCreated.status).toBe(201);
 
-        //Join into a game
+        // Join into a game
         const path = `/api/games/${resultGameCreated._body.id }/join`
         const secondPlayerToken = generateTestToken(2, "test2@gmail.com")
         const joinResponse = await request(app)
         .post(path)
         .set("Authorization", `Bearer ${secondPlayerToken}`);
-        expect(joinResponse.status).toBe(201);
-
-    })
-
-    test("The user with an invalid token cannot join in a existing game", async()=>{
-        const resultGameCreated = await createGame()
-        expect(resultGameCreated.status).toBe(201);
-
-        //Join into a game
-        const path = `/api/games/${resultGameCreated._body.id }/join`
-        const secondPlayerToken = "InvalidToken"
-        const joinResponse = await request(app)
-        .post(path)
+        
+        // Faz com que o jogador fique pronto para começar a partida
+        const readyPath = `/api/games/${resultGameCreated._body.id }/ready`
+        const readyResponse = await request(app)
+        .post(readyPath)
         .set("Authorization", `Bearer ${secondPlayerToken}`);
-        expect(joinResponse.status).toBe(401);
 
+        expect(readyResponse.status).toBe(200)
     })
 })
