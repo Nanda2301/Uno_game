@@ -4,33 +4,33 @@ const bcrypt = require("bcrypt");
 require("dotenv").config();
 
 class UserService {
+
     async create(data) {
-        if (data === undefined) {
-            return { message: "Tem que enviar dados", error: true };
+        if (!data) {
+            return { status: 400, message: "Dados não enviados" };
         }
 
-        if (!data.name) {
-            return { message: "Tem que enviar o nome", error: true };
+        const { name, userName, email, password } = data;
+
+        if (!name || !userName || !email || !password) {
+            return { status: 400, message: "Preencha todos os campos" };
         }
 
-        if (!data.userName) {
-            return { message: "Tem que enviar o nome de usuário", error: true };
+        const emailExists = await UserRepository.emailExist(email);
+        if (emailExists) {
+            return { status: 409, message: "Email já cadastrado" };
         }
 
-        if (!data.password) {
-            return { message: "Tem que enviar o password", error: true };
-        }
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        if (!data.email) {
-            return { message: "Tem que enviar o email", error: true };
-        }
+        const user = await UserRepository.create({
+            name,
+            userName,
+            email,
+            password: hashedPassword
+        });
 
-        if (await UserRepository.emailExist(data.email)) {
-            return { message: "Não pode repetir o email de outro usuario", error: true };
-        }
-
-        const user = await UserRepository.create(data);
-        return { ...user, error: false };
+        return { status: 201, user };
     }
 
     async findById(id) {
@@ -50,30 +50,27 @@ class UserService {
     }
 
     async login(email, password) {
-        const user = await UserRepository.findByEmail(email);
+        if (!email || !password) {
+            return { status: 400, message: "Email e senha são obrigatórios" };
+        }
 
-        if (!user) return { status: 401, message: "User not found" };
+        const user = await UserRepository.findByEmail(email);
+        if (!user) {
+            return { status: 401, message: "Usuário não encontrado" };
+        }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) return { status: 401, message: "Invalid password" };
-
-        const secret = process.env.JWT_SECRET || "fallback_secret_dev";
+        if (!passwordMatch) {
+            return { status: 401, message: "Senha inválida" };
+        }
 
         const token = jwt.sign(
             { id: user.id, email: user.email },
-            secret,
+            process.env.JWT_SECRET,
             { expiresIn: "1h" }
         );
 
         return { status: 200, token };
-    }
-
-    async findById(id) {
-        try {
-            return await UserRepository.findById(id);
-        } catch (error) {
-            throw new Error("Erro ao buscar perfil");
-        }
     }
 }
 

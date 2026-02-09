@@ -1,32 +1,33 @@
-// src/tests/UserLogout.test.js
-
 const AuthService = require('../services/AuthService');
-const TokenBlacklist = require('../models/TokenBlacklist');
+const User = require('../models/User');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-jest.mock('../models/TokenBlacklist');
+jest.mock('../models/User');
+jest.mock('bcrypt');
+jest.mock('jsonwebtoken');
 
-describe('Requisito 8: Teste de unidade para logout', () => {
-    it('Deve confirmar que o usuário foi desconectado com sucesso (token invalidado)', async () => {
-        const mockToken = 'jwt_token_exemplo';
-        
-        // Simula a inserção do token na blacklist
-        TokenBlacklist.create.mockResolvedValue({ token: mockToken });
+describe('Teste de unidade - Login', () => {
+  it('Deve autenticar o usuário e retornar um token JWT', async () => {
+    const mockUser = {
+      id: 1,
+      email: 'teste@email.com',
+      password: 'senha_hash'
+    };
 
-        const result = await AuthService.logout(mockToken);
-        
-        expect(TokenBlacklist.create).toHaveBeenCalledWith({ token: mockToken });
-        
-        // Valida o objeto de mensagem retornado pelo seu AuthService
-        expect(result.message).toBe("Logout realizado com sucesso");
+    User.findOne.mockResolvedValue(mockUser);
+
+    bcrypt.compare.mockResolvedValue(true);
+
+    jwt.sign.mockReturnValue('jwt_token_gerado');
+
+    const result = await AuthService.login('teste@email.com', '123456');
+
+    expect(User.findOne).toHaveBeenCalledWith({
+      where: { email: 'teste@email.com' }
     });
 
-    it('Não deve permitir acesso a recursos protegidos após o logout', async () => {
-        const mockToken = 'token_na_blacklist';
-        
-        TokenBlacklist.findOne.mockResolvedValue({ token: mockToken });
-
-        const isTokenInBlacklist = await TokenBlacklist.findOne({ where: { token: mockToken } });
-        
-        expect(isTokenInBlacklist).not.toBeNull();
-    });
+    expect(bcrypt.compare).toHaveBeenCalled();
+    expect(result.token).toBe('jwt_token_gerado');
+  });
 });
