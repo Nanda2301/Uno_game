@@ -1,4 +1,5 @@
-const CardService = require('../services/CardService');
+const CardService = require('../services/CardService'); 
+// Se exportou 'new CardService()', CardService aqui já é a instância.
 const CardRepository = require('../repositories/CardRepository');
 
 jest.mock('../repositories/CardRepository');
@@ -111,4 +112,24 @@ describe('CardService - CRUD Card Operations', () => {
             expect(CardRepository.delete).not.toHaveBeenCalled();
         });
     });
+});
+
+describe('CardService Functor Tests', () => {
+    test('Deve lidar com ID indefinido sem lançar exceção', async () => {
+        const result = await CardService.findById(undefined);
+        expect(result).toBeNull();
+    });
+
+    test('Deve retornar null com segurança quando o card não existe', async () => {
+        CardRepository.findById.mockResolvedValue(null);
+
+        const result = await CardService.findById(999);
+
+        expect(result).toBeNull();
+    });
+
+    test('Deve lidar com ID indefinido sem lançar exceção', async () => {
+        const result = await CardService.findById(undefined);
+        expect(result).toBeNull();
+    })
 });

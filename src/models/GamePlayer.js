@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
 
+
 // Tabela intermediária para jogadores em uma partida
 const GamePlayer = sequelize.define("GamePlayer", {
     gameId: {

@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
 
+
 const Game = sequelize.define("Game", {
     title: {
         type: DataTypes.STRING,

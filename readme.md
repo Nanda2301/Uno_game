@@ -6,6 +6,10 @@ API REST construída com **Node.js**, **Express**, **Sequelize** e **SQLite** pa
 
 ## 🔥 Programação Funcional Aplicada
 
+### Running the project
+Start the development server with `npm run dev`
+
+
 ### 1️⃣ **Currying** (`CardService.js`)
 
 **O que é:** Transformar uma função que recebe múltiplos argumentos em uma sequência de funções que recebem um argumento por vez.
