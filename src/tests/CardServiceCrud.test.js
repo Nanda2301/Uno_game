@@ -61,23 +61,23 @@ describe('CardService - CRUD Card Operations', () => {
     });
 
     describe('update', () => {
-        it('Update an existing card successfully.', async () => {
-        
-            const cardId = 1;
-            const updateData = { pile: 'discard' };
-            const mockCardOriginal = { id: cardId, color: 'red', value: '5', pile: 'draw' };
-            const mockCardAtualizada = { ...mockCardOriginal, ...updateData };
+         it('Update an existing card successfully.', async () => {
+    
+        const cardId = 1;
+        const updateData = { pile: 'discard' };
+        const mockCardOriginal = { id: cardId, color: 'red', value: '5', pile: 'draw' };
+        const mockCardAtualizada = { ...mockCardOriginal, ...updateData };
 
-            CardRepository.findById.mockResolvedValue(mockCardOriginal);
-            CardRepository.update.mockResolvedValue(mockCardAtualizada);
+        CardRepository.findById.mockResolvedValue(mockCardOriginal);
+        CardRepository.update.mockResolvedValue(mockCardAtualizada);
 
-            const result = await CardService.update(cardId, updateData);
+        const result = await CardService.update(cardId, updateData);
 
-            expect(CardRepository.findById).toHaveBeenCalledWith(cardId);
-            expect(CardRepository.update).toHaveBeenCalledWith(mockCardOriginal, updateData);
-            expect(result).toEqual(mockCardAtualizada);
-        });
-
+        expect(CardRepository.findById).toHaveBeenCalledWith(cardId);
+        expect(CardRepository.update).toHaveBeenCalledWith(cardId, updateData);
+        expect(result).toEqual(mockCardAtualizada);
+    });
+    
         it('Returns null when attempting to update a non-existent card.', async () => {
             CardRepository.findById.mockResolvedValue(null);
 
