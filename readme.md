@@ -191,16 +191,16 @@ npm run dev
 | GET | `/api/users/:id` | Buscar usuário por ID |
 | DELETE | `/api/users/:id` | Deletar usuário |
 
-**Exemplo - Criar Usuário:**
-```json
-POST /api/users
-{
-  "name": "Murillo Morais",
-  "userName": "murillomorais99",
-  "email": "murillo@email.com",
-  "password": "senhaSegura123"
-}
-```
+**Criar Usuário:**
+
+Json de Entrada:
+
+![Post User](image.png)
+
+
+Json de Saída: 
+
+
 
 **Exemplo - Login:**
 ```json
