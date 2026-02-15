@@ -149,5 +149,127 @@ describe('GameService - Player Management (CRUD)', () => {
 
             expect(GameRepository.update).toHaveBeenCalledWith(mockGame, { status: 'finished' });
         });
+
+    describe('abandonarJogo - jogo em andamento', () => {
+
+        it('deve permitir que um jogador saia de um jogo em andamento', async () => {
+            const gameId = 1;
+            const playerId = 10;
+
+            const mockGame = {
+                id: gameId,
+                status: 'in_progress',
+                creatorId: 99,
+                currentPlayerPosition: 2,
+                direction: 1
+            };
+
+            const mockPlayer = { playerId, position: 2 };
+            const mockOther = { playerId: 99, position: 1 };
+
+            GameRepository.findById.mockResolvedValue(mockGame);
+            GamePlayerRepository.findOne.mockResolvedValue(mockPlayer);
+            GamePlayerRepository.findByGameId.mockResolvedValue([mockOther, mockPlayer]);
+            GamePlayerRepository.delete.mockResolvedValue(true);
+
+            const result = await GameService.abandonarJogo(gameId, playerId);
+
+            expect(GamePlayerRepository.delete).toHaveBeenCalledWith(mockPlayer);
+             expect(result).toEqual({ message: 'Partida encerrada por W.O.' });
+        });
+
+        it('deve retornar erro se o jogador não estiver no jogo', async () => {
+            GameRepository.findById.mockResolvedValue({ id: 1, status: 'in_progress' });
+            GamePlayerRepository.findOne.mockResolvedValue(null);
+
+            const result = await GameService.abandonarJogo(1, 999);
+
+            expect(result).toEqual({ error: 'Jogador não está na partida' });
+        });
+
+        it('deve retornar erro se o jogo não existir', async () => {
+            GameRepository.findById.mockResolvedValue(null);
+
+            const result = await GameService.abandonarJogo(1, 10);
+
+            expect(result).toEqual({ error: 'Jogo não encontrado' });
+        });
     });
+
+    });
+
+    describe('finalizarJogo', () => {
+
+    it('deve finalizar o jogo com sucesso quando o criador solicitar', async () => {
+        const gameId = 1;
+        const creatorId = 10;
+
+        const mockGame = {
+            id: gameId,
+            status: 'in_progress',
+            creatorId,
+            toJSON: () => ({ id: gameId })
+        };
+
+        GameRepository.findById.mockResolvedValue(mockGame);
+        GameRepository.update.mockResolvedValue(true);
+
+        const result = await GameService.finalizarJogo(gameId, creatorId);
+
+        expect(GameRepository.update).toHaveBeenCalledWith(mockGame, { status: 'finished' });
+        expect(result.message).toBe('Jogo finalizado com sucesso!');
+    });
+
+    it('deve retornar erro se o jogo já estiver finalizado', async () => {
+        GameRepository.findById.mockResolvedValue({
+            id: 1,
+            status: 'finished'
+        });
+
+        const result = await GameService.finalizarJogo(1, 10);
+
+        expect(result).toEqual({ error: 'Jogo já foi finalizado' });
+    });
+
+    it('deve retornar erro se não for o criador tentando finalizar', async () => {
+        GameRepository.findById.mockResolvedValue({
+            id: 1,
+            status: 'in_progress',
+            creatorId: 10
+        });
+
+        const result = await GameService.finalizarJogo(1, 99);
+
+        expect(result).toEqual({
+            error: 'Apenas o criador da partida pode finalizá-la'
+        });
+    });
+});
+
+describe('estado atual do jogo', () => {
+
+    it('deve retornar corretamente o estado atual do jogo', async () => {
+        const mockGame = {
+            id: 1,
+            status: 'in_progress',
+            currentPlayerPosition: 1,
+            direction: 1
+        };
+
+        GameRepository.findById.mockResolvedValue(mockGame);
+
+        const result = await GameService.findById(1);
+
+        expect(result).toEqual(mockGame);
+    });
+
+    it('deve retornar null quando o jogo não existir', async () => {
+        GameRepository.findById.mockResolvedValue(null);
+
+        const result = await GameService.findById(999);
+
+        expect(result).toBeNull();
+    });
+});
+
 });

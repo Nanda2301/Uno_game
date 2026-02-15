@@ -6,6 +6,10 @@ API REST construída com **Node.js**, **Express**, **Sequelize** e **SQLite** pa
 
 ## 🔥 Programação Funcional Aplicada
 
+### Running the project
+Start the development server with `npm run dev`
+
+
 ### 1️⃣ **Currying** (`CardService.js`)
 
 **O que é:** Transformar uma função que recebe múltiplos argumentos em uma sequência de funções que recebem um argumento por vez.
@@ -187,16 +191,16 @@ npm run dev
 | GET | `/api/users/:id` | Buscar usuário por ID |
 | DELETE | `/api/users/:id` | Deletar usuário |
 
-**Exemplo - Criar Usuário:**
-```json
-POST /api/users
-{
-  "name": "Murillo Morais",
-  "userName": "murillomorais99",
-  "email": "murillo@email.com",
-  "password": "senhaSegura123"
-}
-```
+**Criar Usuário:**
+
+Json de Entrada:
+
+![Post User](image.png)
+
+
+Json de Saída: 
+
+
 
 **Exemplo - Login:**
 ```json

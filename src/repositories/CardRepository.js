@@ -13,8 +13,15 @@ class CardRepository {
         return await Card.findByPk(id);
     }
 
-    async update(card, data) {
-        return await card.update(data);
+    async update(id, data) {
+        
+        const card = await this.findById(id)
+        if(data.color) card.color = data.color;
+        if(data.value) card.value = data.value;
+        if(data.gameId) card.gameId = data.gameId
+        await card.save()
+        return card
+
     }
 
     async createMany(cardsData) {
