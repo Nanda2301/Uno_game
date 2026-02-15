@@ -193,7 +193,14 @@ npm run dev
 
 **Criar Usuário:**
 
-![Post User](https://gitlab.com/jala-university1/cohort-4/PT.CSPR-244.GA.T1.26.M1/SA/grupo-3/uno/-/blob/master/image.png?ref_type=heads)
+Json de Entrada:
+
+![Post User](image.png)
+
+
+Json de Saída: 
+
+
 
 **Exemplo - Login:**
 ```json
