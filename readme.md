@@ -192,14 +192,8 @@ npm run dev
 | DELETE | `/api/users/:id` | Deletar usuário |
 
 **Criar Usuário:**
-```json
-POST /api/users
-Json de entrada: 
-![alt text](image.png)
 
-Json de saída:
-![alt text](image-1.png)
-```
+![Post User](https://gitlab.com/jala-university1/cohort-4/PT.CSPR-244.GA.T1.26.M1/SA/grupo-3/uno/-/blob/master/image.png?ref_type=heads)
 
 **Exemplo - Login:**
 ```json
