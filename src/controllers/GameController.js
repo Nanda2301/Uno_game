@@ -1,3 +1,4 @@
+const GameService = require("../services/GameService");
 const gameService = require("../services/GameService");
 
 class GameController {
@@ -168,6 +169,11 @@ class GameController {
         } catch (error) {
             next(error);
         }
+    }
+
+    async getHistory(req, res){
+        const history = GameService.getHistory();
+        return res.status(200).json({history});
     }
 }
 

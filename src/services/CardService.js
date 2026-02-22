@@ -109,9 +109,7 @@ class CardService {
             }))
             .join();
     }
-    async findById(id) {
-        return await CardRepository.findById(id);
-    }
+
 
     async update(id, data) {
         const card = await CardRepository.findById(id);
@@ -128,42 +126,6 @@ class CardService {
         return true;
     }
 
-    async dealCards(gameId, players, cardsPerPlayer) {
-    if (!players || players.length === 0)
-        throw new Error("Players list cannot be empty");
-
-    if (cardsPerPlayer <= 0)
-        throw new Error("cardsPerPlayer must be greater than 0");
-
-    // Busca cartas disponíveis no baralho
-    const deck = await CardRepository.findAll({
-        where: { gameId, pile: 'draw' }
-    });
-
-    if (deck.length < players.length * cardsPerPlayer)
-        throw new Error("Not enough cards in deck");
-
-    // estrutura resultado
-    const resultado = {};
-    players.forEach(p => resultado[p] = []);
-
-    // função recursiva
-    const distribuir = (indiceCarta, rodada) => {
-        if (rodada === cardsPerPlayer) return indiceCarta;
-
-        players.forEach(player => {
-            resultado[player].push(deck[indiceCarta]);
-            indiceCarta++;
-        });
-
-        return distribuir(indiceCarta, rodada + 1);
-    };
-
-    distribuir(0, 0);
-
-    return resultado;
-}
-
     async drawCard(gameId) {
     const card = await CardRepository.findOne({
         where: {
@@ -172,15 +134,35 @@ class CardService {
         }
     });
 
-    await CardRepository.update(card, {
+    await CardRepository.update(card.id, {
         pile: 'discard'
     });
 
-    return card;
-}
+        return card;
+    }
 
     validarJogada(cartaNoTopo) {
         return podeJogar(cartaNoTopo);
+    }
+
+    async drawToPlayer(gameId, playerId){
+        const card = await CardRepository.findOne({
+            where: {
+                gameId,
+                pile: 'draw'
+            }
+        });
+
+        if(!card){
+            throw new Error("Não a cartas no baralho");
+        }
+
+        await CardRepository.update(card.id, {
+            pile: 'hand',
+            playerId: playerId
+        });
+
+        return card;
     }
 }
 

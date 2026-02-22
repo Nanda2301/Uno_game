@@ -32,6 +32,10 @@ class CardRepository {
     async delete(card) {
         return await card.destroy();
     }
+
+    async findOne(options){
+        return await Card.findOne(options)
+    }
 }
 
 module.exports = new CardRepository();
