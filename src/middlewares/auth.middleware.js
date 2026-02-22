@@ -1,19 +1,38 @@
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
 
-module.exports = function auth(req, res, next){
-    const authHeader = req.headers.authorization
+module.exports = function auth(req, res, next) {
 
-    if (!authHeader){
-        return res.status(401).json({error: "Token não fornecido!"})
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({ error: "Token não fornecido!" });
     }
 
-    const [,token] = authHeader.split(" ");
+    const parts = authHeader.split(" ");
 
-    try{
-        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    if (parts.length !== 2) {
+        return res.status(401).json({ error: "Token inválido!" });
+    }
+
+    const [scheme, token] = parts;
+
+    if (!/^Bearer$/i.test(scheme)) {
+        return res.status(401).json({ error: "Token mal formatado!" });
+    }
+
+    try {
+
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET || "secret"
+        );
+
         req.userId = decoded.id;
-        next();
-    }catch(err){
-        return res.status(401).json({error:"Inválid token"})
+
+        return next();
+
+    } catch (err) {
+
+        return res.status(401).json({ error: "Token inválido!" });
     }
-}
+};
