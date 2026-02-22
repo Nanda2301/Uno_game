@@ -171,9 +171,12 @@ class GameController {
         }
     }
 
-    async getHistory(req, res){
-        const history = GameService.getHistory();
-        return res.status(200).json({history});
+    async getHistory(req, res) {
+        const gameId = req.params.id;
+
+        const history = gameService.getHistory(gameId);
+
+        return res.status(200).json(history);
     }
 }
 
