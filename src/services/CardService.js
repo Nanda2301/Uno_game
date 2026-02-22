@@ -115,10 +115,6 @@ class CardService {
 
         
     }
-    
-    async findById(id) {
-        return await CardRepository.findById(id);
-    }
 
     async update(id, data) {
         const card = await CardRepository.findById(id);
@@ -147,11 +143,35 @@ class CardService {
             throw new Error('O baralho de compra está vazio!');
         }
 
-        return await CardRepository.update(card, { pile: 'discard' });
+    await CardRepository.update(card.id, {
+        pile: 'discard'
+    });
+
+        return card;
     }
 
     validarJogada(cartaNoTopo) {
         return podeJogar(cartaNoTopo);
+    }
+
+    async drawToPlayer(gameId, playerId){
+        const card = await CardRepository.findOne({
+            where: {
+                gameId,
+                pile: 'draw'
+            }
+        });
+
+        if(!card){
+            throw new Error("Não a cartas no baralho");
+        }
+
+        await CardRepository.update(card.id, {
+            pile: 'hand',
+            playerId: playerId
+        });
+
+        return card;
     }
 }
 

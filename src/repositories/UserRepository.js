@@ -5,6 +5,7 @@ class UserRepository{
         const newUser = await user.create(data)
         return {
             name: newUser.name,
+            userName: newUser.userName,
             email: newUser.email
         }
     } 
@@ -14,6 +15,7 @@ class UserRepository{
         if(result){
             return {
                 name: result.name,
+                userName: result.userName,
                 email: result.email,
                 createdAt: result.createdAt,
                 updatedAt: result.updatedAt,
@@ -32,14 +34,32 @@ class UserRepository{
         const users = await user.findAll();
         return users.map(x => ({
             name: x.name,
+            userName: x.userName,
             email: x.email,
             createdAt: x.createdAt,
             updatedAt: x.updatedAt,
         }))
     }
 
-    async delete(user){
-        return await user.destroy()
+    async update(id, data){
+        const userToUpdate =  (await user.findByPk(id))
+        if(!userToUpdate){
+            return null
+        }
+        await userToUpdate.update(data)
+        return  {
+                  name: userToUpdate.name,
+                  email: userToUpdate.email
+    }           }   
+
+    async delete(id){
+        const userToDelete =  (await user.findByPk(id))
+        if(!userToDelete){
+            return null
+        }
+        await userToDelete.destroy()
+        return true
+
     }
 
     async emailExist(email) {

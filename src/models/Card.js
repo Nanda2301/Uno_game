@@ -13,6 +13,15 @@ const Card = sequelize.define("Card", {
     gameId: {
         type: DataTypes.INTEGER,
         allowNull: false 
+    },
+    pile: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'draw'
+    },
+    playerId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 });
 

@@ -1,17 +1,23 @@
 const express = require("express");
 const scoreController = require("../controllers/ScoreController");
+const createMemoizationMiddleware = require("../middlewares/memoizationMiddleware");
 const router = express.Router();
 
-// Rotas básicas CRUD
+const cacheConfig = {
+    max: 50,         // Número máximo de itens no cache
+    maxAge: 30000    // Expiração em 30 segundos
+};
+
+const cacheMiddleware = createMemoizationMiddleware(cacheConfig);
+
 router.post("/", scoreController.create);
 router.get("/", scoreController.findAll);
 router.get("/:id", scoreController.getById);
 router.put("/:id", scoreController.update);
 router.delete("/:id", scoreController.delete);
 
-// Novas rotas de ranking e estatísticas
-router.get("/ranking/geral", scoreController.obterRanking);              // Ranking completo
-router.get("/ranking/top10", scoreController.obterTop10);                // Top 10
-router.get("/player/:playerId/stats", scoreController.obterEstatisticasJogador); // Stats de jogador
+router.get("/ranking/geral", cacheMiddleware, scoreController.obterRanking);              
+router.get("/ranking/top10", cacheMiddleware, scoreController.obterTop10);                
+router.get("/player/:playerId/stats", cacheMiddleware, scoreController.obterEstatisticasJogador); 
 
 module.exports = router;
