@@ -16,6 +16,7 @@ router.post("/:id/ready",authMiddlewares, gameController.marcarPronto);         
 router.post("/:id/start",authMiddlewares, gameController.iniciarJogo);          // Iniciar jogo (criador + todos prontos)
 router.post("/:id/finish",authMiddlewares, gameController.finalizarJogo);       // Finalizar jogo (apenas criador)
 
-router.get('/history/:id',authMiddlewares, gameController.getHistory);
+router.get('/:id/history',authMiddlewares, gameController.getHistory);
+router.get('/:id/ranking', gameController.obterRanking);
 
 module.exports = router;

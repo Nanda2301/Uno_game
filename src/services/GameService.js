@@ -350,6 +350,22 @@ class GameService {
         await GameRepository.delete(game);
         return true;
     }
+
+    async obterRankingPartida(gameId) {
+        const jogadores = await GamePlayerRepository.findScoresByGameId(gameId);
+
+        if (!jogadores.length) {
+            return { ranking: [] };
+        }
+
+        return {
+            ranking: jogadores.map((jogador, index) => ({
+                posicao: index + 1,
+                playerId: jogador.playerId,
+                score: jogador.score
+            }))
+        };
+    }
 }
 
 module.exports = new GameService();

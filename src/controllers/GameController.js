@@ -178,6 +178,18 @@ class GameController {
 
         return res.status(200).json(history);
     }
+
+    async obterRanking(req, res, next) {
+        try {
+            const gameId = req.params.id;
+
+            const ranking = await gameService.obterRankingPartida(gameId);
+
+            return res.status(200).json(ranking);
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 module.exports = new GameController();

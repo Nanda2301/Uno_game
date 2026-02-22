@@ -40,6 +40,14 @@ class GamePlayerRepository {
         });
     }
 
+    async findScoresByGameId(gameId) {
+    return await GamePlayer.findAll({
+        where: { gameId },
+        attributes: ['playerId', 'score', 'position'],
+        order: [['score', 'DESC']]
+    });
+}
+
     async delete(gamePlayer) { return await gamePlayer.destroy(); }
 
     
