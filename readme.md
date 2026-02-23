@@ -195,28 +195,46 @@ npm run dev
 
 Json de Entrada:
 
-![Post User](image.png)
+![UserEntry](images/image1.png)
 
 
 Json de Saída: 
+![UserLeave](images/image2.png)
 
 
+**Login:**
 
-**Exemplo - Login:**
-```json
-POST /api/users/login
-{
-  "email": "murillo@email.com",
-  "password": "senhaSegura123"
-}
+![alt text](images/image3.png)
 
-// Resposta:
-{
-  "token": "eyJhbGciOiJIUzI1NiIs..."
-}
-```
+Resposta:
 
----
+![alt text](images/image4.png)
+
+
+**Logout**
+
+![alt text](images/image5.png)
+
+**Perfil do Usuário** 
+
+![alt text](images/image6.png)
+
+
+**Pegando pelo ID** 
+
+![alt text](images/image7.png)
+
+**Update - Atualizando usuário**
+
+![alt text](images/image8.png)
+
+**Pegando todos Users** 
+![alt text](images/image9.png)
+
+**Deletando um User**
+![alt text](images/image10.png)
+
+
 
 ### 🎮 Jogos (Games)
 
@@ -231,42 +249,12 @@ POST /api/users/login
 | POST | `/api/games/:id/finish` | 🏁 **Novo:** Finalizar jogo (apenas criador) |
 | DELETE | `/api/games/:id` | Deletar partida |
 
-**Exemplo - Criar Jogo:**
-```json
-POST /api/games
-{
-  "title": "Mesa de Domingo",
-  "maxPlayers": 4,
-  "creatorId": 1
-}
+**Criar Jogo:**
 
-// Resposta:
-{
-  "id": 1,
-  "title": "Mesa de Domingo",
-  "status": "waiting",
-  "maxPlayers": 4,
-  "creatorId": 1,
-  "createdAt": "2026-01-31T..."
-}
-// + Baralho de 108 cartas criado automaticamente!
-```
+![alt text](images/image11.png)
 
-**Exemplo - Entrar na Partida:**
-```json
-POST /api/games/1/join
-{
-  "playerId": 2
-}
-
-// Resposta:
-{
-  "gameId": 1,
-  "playerId": 2,
-  "ready": false,
-  "position": 2
-}
-```
+**Entrar na Partida:**
+![alt text](images/image12.png)
 
 **Exemplo - Iniciar Jogo (COM VALIDAÇÕES):**
 ```json

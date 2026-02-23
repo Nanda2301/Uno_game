@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const CardRepository = require("../repositories/CardRepository");
 
 
@@ -115,10 +116,6 @@ class CardService {
 
         
     }
-    
-    async findById(id) {
-        return await CardRepository.findById(id);
-    }
 
     async update(id, data) {
         const card = await CardRepository.findById(id);
@@ -147,11 +144,56 @@ class CardService {
             throw new Error('O baralho de compra está vazio!');
         }
 
-        return await CardRepository.update(card, { pile: 'discard' });
+    await CardRepository.update(card.id, {
+        pile: 'discard'
+    });
+
+        return card;
     }
 
     validarJogada(cartaNoTopo) {
         return podeJogar(cartaNoTopo);
+    }
+
+    async drawToPlayer(gameId, playerId){
+        const card = await CardRepository.findOne({
+            where: {
+                gameId,
+                pile: 'draw'
+            }
+        });
+
+        if(!card){
+            throw new Error("Não a cartas no baralho");
+        }
+
+        await CardRepository.update(card.id, {
+            pile: 'hand',
+            playerId: playerId
+        });
+
+        console.log(await CardRepository.findAll())
+
+        return card;
+    }
+
+    /**
+     * Veja as cartas na mão de um jogador
+     * 
+     * @param {number} gameId 
+     * @param {number} playerId 
+     */
+    async seePlayerCards(gameId, playerId){
+        const cards = await CardRepository.findAll({
+            where:{
+                gameId,
+                playerId
+            }
+        })
+
+        console.log("As cartas são: ", cards)
+
+        return cards
     }
 }
 

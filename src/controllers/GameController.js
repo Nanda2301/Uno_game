@@ -1,3 +1,4 @@
+const GameService = require("../services/GameService");
 const gameService = require("../services/GameService");
 
 class GameController {
@@ -170,6 +171,45 @@ class GameController {
             }
 
             return res.status(204).send();
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getHistory(req, res) {
+        const gameId = req.params.id;
+
+        const history = gameService.getHistory(gameId);
+
+        return res.status(200).json(history);
+    }
+
+    /**
+     * 
+     * @param {number} req 
+     * @param {number} res 
+     * @param {number} next 
+     * @returns 
+     */
+    async seePlayerHand(req, res, next){
+        const gameId = req.params.id;
+        const playerId = req.userId
+
+        try{
+            const result = await GameService.seePlayerHand(gameId, playerId)
+            return res.status(200).json({"player cards": result})
+        }catch(error){
+            next(error)
+        }
+    }
+
+    async obterRanking(req, res, next) {
+        try {
+            const gameId = req.params.id;
+
+            const ranking = await gameService.obterRankingPartida(gameId);
+
+            return res.status(200).json(ranking);
         } catch (error) {
             next(error);
         }

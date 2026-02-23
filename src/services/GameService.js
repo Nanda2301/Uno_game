@@ -42,6 +42,31 @@ class GameService {
     /**
      * Criar novo jogo
      */
+    constructor(){
+        this.history = {};
+        this.unoStatus = {};
+    }
+
+    addHistory(gameId, player, action){
+         if (!this.history[gameId]) {
+        this.history[gameId] = [];
+        }
+
+        this.history[gameId].push({
+            player,
+            action,
+            timestamp: new Date()
+        });
+    }
+
+    getHistory(gameId){
+        return this.history[gameId] || [];
+    }
+
+    clearHistory(gameId){
+       delete this.history[gameId];
+    }
+
     async create(gameData, creatorId) {
         if (!creatorId) {
             throw new Error('Creator ID é obrigatório');
@@ -73,7 +98,9 @@ class GameService {
     }
 
     async findById(id) {
-        return await GameRepository.findById(id);
+        const result = await GameRepository.findById(id);
+        console.log(result)
+        return result
     }
 
     /**
@@ -114,17 +141,19 @@ class GameService {
     
     async distribuirCartas(gameId) {
         const jogadores =
-        await GamePlayerRepository.findByGameId(gameId);
+            await GamePlayerRepository.findByGameId(gameId);
 
         for (const jogador of jogadores) {
             for (let i = 0; i < 7; i++) {
-              await CardService.drawToPlayer(
-                gameId,
-                jogador.playerId
-            );
+                await CardService.drawToPlayer(
+                    gameId,
+                    jogador.playerId
+                );
+            }
         }
+
+        this.addHistory(gameId, "System", "Cards dealt");
     }
-}
     /**
      * Marcar jogador como pronto
      */
@@ -137,7 +166,10 @@ class GameService {
 
         await GamePlayerRepository.update(jogador, { ready: true });
         
+        this.addHistory(gameId, `Player ${playerId}`, "ready")
+        
         return { message: 'Jogador marcado como pronto' };
+        
     }
 
     /**
@@ -171,15 +203,24 @@ class GameService {
             status: 'in_progress'
         });
 
+        this.addHistory(gameId, `Player ${userId}`, "Started the game")
+
         // distribui cartas
         await this.distribuirCartas(game.id);
 
         // compra a primeira carta do baralho
         const primeiraCarta = await CardService.drawCard(game.id);
+
+        this.addHistory(gameId, "System", `First card in discart pile: ${primeiraCarta.color} : ${primeiraCarta.value}`)
         // define como topo
         await GameRepository.update(game, {
-        topDiscardCardId: primeiraCarta.id
+            topDiscardCardId: primeiraCarta.id
         });
+
+        return {
+            message: "Jogo iniciado com sucesso",
+            topCard: primeiraCarta
+        }
 
         
     }
@@ -209,6 +250,8 @@ class GameService {
 
         await GameRepository.update(game, { status: 'finished' });
 
+        this.addHistory(gameId,`Player ${userId}`, "end the game");
+
         return { 
             message: 'Jogo finalizado com sucesso!',
             game: { ...game.toJSON(), status: 'finished' }
@@ -225,11 +268,16 @@ class GameService {
         const jogadores = await GamePlayerRepository.findByGameId(gameId);
         // Remove jogador
         await GamePlayerRepository.delete(jogador);
+
+        this.addHistory(gameId, `Player ${playerId}`, "abandoned the game");
+
         const restantes = jogadores.filter(j => j.playerId !== playerId);
         // Se sobrar apenas 1 → W.O.
         if (restantes.length <= 1 && game.status === 'in_progress') {
         await GameRepository.update(game, { status: 'finished' });
         
+        this.addHistory(gameId,`System`, "the game end for w.o");
+
         return {
             message: 'Partida encerrada por W.O.'
         };
@@ -290,14 +338,17 @@ class GameService {
 
         const jogadores = await GamePlayerRepository.findByGameId(gameId);
         const total = jogadores.length;
-        let novaPosicao =
-        game.currentPlayerPosition + game.direction;
+        let novaPosicao = game.currentPlayerPosition + game.direction;
+        
         if (novaPosicao > total) novaPosicao = 1;
+        
         if (novaPosicao < 1) novaPosicao = total;
         await GameRepository.update(game, {
             currentPlayerPosition: novaPosicao
         });
-        
+
+        this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
+
         return novaPosicao;
     }
 
@@ -305,13 +356,10 @@ class GameService {
     async topoDescarte(gameId) {
       const game = await GameRepository.findById(gameId);
 
-       return await CardRepository.findById(
+       return await CardService.findById(
         game.topDiscardCardId
       );
     }
-
-
-
 
     async update(id, data) {
         const game = await GameRepository.findById(id);
@@ -326,6 +374,26 @@ class GameService {
 
         await GameRepository.delete(game);
         return true;
+    }
+
+    async seePlayerHand(gameId, playerId){
+        return await CardService.seePlayerCards(gameId, playerId)
+    }
+    
+    async obterRankingPartida(gameId) {
+        const jogadores = await GamePlayerRepository.findScoresByGameId(gameId);
+
+        if (!jogadores.length) {
+            return { ranking: [] };
+        }
+
+        return {
+            ranking: jogadores.map((jogador, index) => ({
+                posicao: index + 1,
+                playerId: jogador.playerId,
+                score: jogador.score
+            }))
+        };
     }
 }
 

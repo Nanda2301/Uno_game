@@ -5,8 +5,8 @@ class CardRepository {
         return await Card.create(data);
     }
 
-    async findAll() {
-        return await Card.findAll();
+    async findAll(options={}) {
+        return await Card.findAll(options);
     }
 
     async findById(id) {
@@ -18,7 +18,9 @@ class CardRepository {
         const card = await this.findById(id)
         if(data.color) card.color = data.color;
         if(data.value) card.value = data.value;
-        if(data.gameId) card.gameId = data.gameId
+        if(data.gameId) card.gameId = data.gameId;
+        if(data.playerId) card.playerId = data.playerId;
+        if(data.pile) card.pile = data.pile;
         await card.save()
         return card
 
@@ -31,6 +33,10 @@ class CardRepository {
 
     async delete(card) {
         return await card.destroy();
+    }
+
+    async findOne(options){
+        return await Card.findOne(options)
     }
 }
 

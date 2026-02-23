@@ -65,6 +65,25 @@ class CardController {
             next(error);
         }
     }
+    async deal(req, res, next) {
+    try {
+        const { gameId, players, cardsPerPlayer } = req.body;
+
+        const resultado = await cardService.dealCards(
+            gameId,
+            players,
+            cardsPerPlayer
+        );
+
+        res.status(200).json({
+            message: "Cards dealt successfully.",
+            players: resultado
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
 
     async delete(req, res, next) {
         try {
@@ -80,5 +99,7 @@ class CardController {
         }
     }
 }
+
+
 
 module.exports = new CardController();
