@@ -196,7 +196,7 @@ class GameController {
         const playerId = req.userId
 
         try{
-            const result = GameService.seePlayerHand(gameId, playerId)
+            const result = await GameService.seePlayerHand(gameId, playerId)
             return res.status(200).json({"player cards": result})
         }catch(error){
             next(error)

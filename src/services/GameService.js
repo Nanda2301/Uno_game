@@ -44,6 +44,7 @@ class GameService {
      */
     constructor(){
         this.history = {};
+        this.unoStatus = {};
     }
 
     addHistory(gameId, player, action){
@@ -97,7 +98,9 @@ class GameService {
     }
 
     async findById(id) {
-        return await GameRepository.findById(id);
+        const result = await GameRepository.findById(id);
+        console.log(result)
+        return result
     }
 
     /**
@@ -374,7 +377,7 @@ class GameService {
     }
 
     async seePlayerHand(gameId, playerId){
-        return CardService.seePlayerCards(gameId, playerId)
+        return await CardService.seePlayerCards(gameId, playerId)
     }
     
     async obterRankingPartida(gameId) {

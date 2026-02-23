@@ -1,7 +1,11 @@
 const express = require("express");
 const gameController = require("../controllers/GameController");
 const authMiddlewares = require("../middlewares/auth.middleware.js");
+const errorMiddleware = require("../middlewares/errorMiddleware.js")
 const router = express.Router();
+
+// error 
+router.get("/:id/myhand", authMiddlewares, gameController.seePlayerHand, errorMiddleware)
 
 // Rotas básicas CRUD
 router.post("/",authMiddlewares, gameController.create);

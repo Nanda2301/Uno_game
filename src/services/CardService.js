@@ -172,6 +172,8 @@ class CardService {
             playerId: playerId
         });
 
+        console.log(await CardRepository.findAll())
+
         return card;
     }
 
