@@ -1,5 +1,6 @@
 const UserRepository = require('../repositories/UserRepository');
 const jwt = require('jsonwebtoken');
+const bcrypt = require("bcrypt");
 
 async function create(data) {
 
@@ -46,23 +47,22 @@ async function deleteUser(id) {
 }
 
 async function login(email, password) {
-
     const user = await UserRepository.findByEmail(email);
 
-    if (!user || user.password !== password) {
-        return { status: 401, message: "Credenciais inválidas" };
-    }
+    if (!user) return { status: 401, message: "User not found" };
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) return { status: 401, message: "Invalid password" };
+
+    const secret = process.env.JWT_SECRET || "fallback_secret_dev";
 
     const token = jwt.sign(
-        { id: user.id },
-        process.env.JWT_SECRET || "secret",
+        { id: user.id, email: user.email },
+        secret,
         { expiresIn: "1h" }
     );
 
-    return {
-        status: 200,
-        token
-    };
+    return { status: 200, token };
 }
 
 module.exports = {
