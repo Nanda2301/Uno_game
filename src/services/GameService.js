@@ -350,6 +350,10 @@ class GameService {
         await GameRepository.delete(game);
         return true;
     }
+
+    async seePlayerHand(gameId, playerId){
+        return CardService.seePlayerCards(gameId, playerId)
+    }
 }
 
 module.exports = new GameService();

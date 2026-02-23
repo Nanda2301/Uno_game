@@ -5,8 +5,8 @@ class CardRepository {
         return await Card.create(data);
     }
 
-    async findAll() {
-        return await Card.findAll();
+    async findAll(options={}) {
+        return await Card.findAll(options);
     }
 
     async findById(id) {

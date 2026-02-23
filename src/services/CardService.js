@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const CardRepository = require("../repositories/CardRepository");
 
 
@@ -163,6 +164,25 @@ class CardService {
         });
 
         return card;
+    }
+
+    /**
+     * Veja as cartas na mão de um jogador
+     * 
+     * @param {number} gameId 
+     * @param {number} playerId 
+     */
+    async seePlayerCards(gameId, playerId){
+        const cards = await CardRepository.findAll({
+            where:{
+                gameId,
+                playerId
+            }
+        })
+
+        console.log("As cartas são: ", cards)
+
+        return cards
     }
 }
 

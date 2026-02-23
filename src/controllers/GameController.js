@@ -178,6 +178,26 @@ class GameController {
 
         return res.status(200).json(history);
     }
+
+    /**
+     * 
+     * @param {number} req 
+     * @param {number} res 
+     * @param {number} next 
+     * @returns 
+     */
+    async seePlayerHand(req, res, next){
+        const gameId = req.params.id;
+        const playerId = req.userId
+
+        try{
+            const result = GameService.seePlayerHand(gameId, playerId)
+            return res.status(200).json({"player cards": result})
+        }catch(error){
+            next(error)
+        }
+
+    }
 }
 
 module.exports = new GameController();
