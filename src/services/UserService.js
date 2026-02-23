@@ -1,80 +1,75 @@
-const UserRepository = require("../repositories/UserRepository");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-require("dotenv").config();
+const UserRepository = require('../repositories/UserRepository');
+const jwt = require('jsonwebtoken');
 
-class UserService {
-    async create(data) {
-        if (data === undefined) {
-            return { message: "Tem que enviar dados", error: true };
-        }
+async function create(data) {
 
-        if (!data.name) {
-            return { message: "Tem que enviar o nome", error: true };
-        }
-
-        if (!data.userName) {
-            return { message: "Tem que enviar o nome de usuário", error: true };
-        }
-
-        if (!data.password) {
-            return { message: "Tem que enviar o password", error: true };
-        }
-
-        if (!data.email) {
-            return { message: "Tem que enviar o email", error: true };
-        }
-
-        if (await UserRepository.emailExist(data.email)) {
-            return { message: "Não pode repetir o email de outro usuario", error: true };
-        }
-
-        const user = await UserRepository.create(data);
-        return { ...user, error: false };
+    if (!data.password) {
+        return { error: true, message: "Tem que enviar o password" };
     }
 
-    async findById(id) {
-        return UserRepository.findById(id);
+    if (!data.userName) {
+        return { error: true, message: "Tem que enviar o nome de usuário" };
     }
 
-    async findAll() {
-        return UserRepository.findAll();
+    if (!data.name || !data.email) {
+        return { error: true, message: "Preencha todos os campos" };
     }
 
-    async update(id, data) {
-        return UserRepository.update(id, data);
+    const emailExist = await UserRepository.emailExist(data.email);
+
+    if (emailExist) {
+        return { error: true, message: "Não pode repetir o email" };
     }
 
-    async delete(id) {
-        return UserRepository.delete(id);
-    }
+    const user = await UserRepository.create(data);
 
-    async login(email, password) {
-        const user = await UserRepository.findByEmail(email);
-
-        if (!user) return { status: 401, message: "User not found" };
-
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) return { status: 401, message: "Invalid password" };
-
-        const secret = process.env.JWT_SECRET || "fallback_secret_dev";
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            secret,
-            { expiresIn: "1h" }
-        );
-
-        return { status: 200, token };
-    }
-
-    async findById(id) {
-        try {
-            return await UserRepository.findById(id);
-        } catch (error) {
-            throw new Error("Erro ao buscar perfil");
-        }
-    }
+    return {
+        error: false,
+        ...user
+    };
 }
 
-module.exports = new UserService();
+async function findById(id) {
+    return await UserRepository.findById(id);
+}
+
+async function update(id, data) {
+    return await UserRepository.update(id, data);
+}
+
+async function findAll() {
+    return await UserRepository.findAll();
+}
+
+async function deleteUser(id) {
+    return await UserRepository.delete(id);
+}
+
+async function login(email, password) {
+
+    const user = await UserRepository.findByEmail(email);
+
+    if (!user || user.password !== password) {
+        return { status: 401, message: "Credenciais inválidas" };
+    }
+
+    const token = jwt.sign(
+        { id: user.id },
+        process.env.JWT_SECRET || "secret",
+        { expiresIn: "1h" }
+    );
+
+    return {
+        status: 200,
+        token
+    };
+}
+
+module.exports = {
+    create,
+    findById,
+    update,
+    findAll,
+    delete: deleteUser,
+    login
+};

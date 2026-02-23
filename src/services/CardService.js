@@ -96,21 +96,26 @@ class CardService {
     }
 
     async findById(id) {
-        if (!id) return null;
-        const card = await CardRepository.findById(id);
+        try {
+            if (!id) return null;
+            const card = await CardRepository.findById(id);
         
-        if (!card) return null;
-
-        return CardFunctor(card)
-            .map(c => (typeof c.get === 'function' ? c.get({ plain: true }) : c))
+            // Uso de Functor para transformar o dado sem mutação direta
+            return CardFunctor(card)
+            .map(c => (c.toJSON ? c.toJSON() : c))
             .map(c => ({
                 ...c,
-                label: `${c.color.toUpperCase()} - ${c.value}`, 
+                label: `${c.color.toUpperCase()} - ${c.value}`,
                 viewedAt: new Date().toISOString()
             }))
             .join();
-    }
+        } catch (error) {
+            console.error(`Erro ao buscar carta ${id}:`, error);
+            throw new Error('Falha na comunicação com o banco de dados');
+        }
 
+        
+    }
 
     async update(id, data) {
         const card = await CardRepository.findById(id);
@@ -128,12 +133,16 @@ class CardService {
     }
 
     async drawCard(gameId) {
-    const card = await CardRepository.findOne({
-        where: {
-            gameId,
-            pile: 'draw'
+        const card = await CardRepository.findOne({
+            where: {
+                gameId,
+                pile: 'draw'
+            }
+        });
+
+        if (!card) {
+            throw new Error('O baralho de compra está vazio!');
         }
-    });
 
     await CardRepository.update(card.id, {
         pile: 'discard'

@@ -308,6 +308,28 @@ class GameService {
        return jogador;
     }
 
+    // Método para verificar fim de jogo e calcular pontos
+    async checkGameOver(gameId) {
+        const players = await GamePlayerRepository.findByGameId(gameId);
+        // Vence quem ficar com 0 cartas
+        const winner = players.find(p => p.hand && p.hand.length === 0);
+        
+        if (winner) {
+            const scores = {};
+            players.forEach(p => {
+                // Soma os pontos das cartas que restaram na mão dos perdedores
+                scores[p.playerName] = p.hand.reduce((total, card) => {
+                    return total + this.calculateCardScore(card);
+                }, 0);
+            });
+            
+            await GameRepository.update(gameId, { status: 'finished' });
+            return { winner: winner.playerName, scores };
+        }
+
+        return null;
+    }
+
     async proximoTurno(gameId) {
         const game = await GameRepository.findById(gameId);
 
@@ -319,12 +341,12 @@ class GameService {
         
         if (novaPosicao < 1) novaPosicao = total;
         await GameRepository.update(game, {
-        currentPlayerPosition: novaPosicao
-       });
+            currentPlayerPosition: novaPosicao
+        });
 
-       this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
+        this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
 
-       return novaPosicao;
+        return novaPosicao;
     }
 
 
@@ -353,6 +375,22 @@ class GameService {
 
     async seePlayerHand(gameId, playerId){
         return CardService.seePlayerCards(gameId, playerId)
+    }
+    
+    async obterRankingPartida(gameId) {
+        const jogadores = await GamePlayerRepository.findScoresByGameId(gameId);
+
+        if (!jogadores.length) {
+            return { ranking: [] };
+        }
+
+        return {
+            ranking: jogadores.map((jogador, index) => ({
+                posicao: index + 1,
+                playerId: jogador.playerId,
+                score: jogador.score
+            }))
+        };
     }
 }
 
