@@ -3,7 +3,8 @@ const APIUsageLog = require("../models/APIUsageLog")
 const APITracker = async (req, res, next) => {
     const startTime = Date.now();
 
-    res.on("finish", async()=>{ // Executa uma função quando a resposta terminar
+    // Executa uma função quando a resposta terminar
+    res.on("finish", async()=>{ 
         try{
             const responseTime = Date.now() - startTime
 
@@ -17,10 +18,6 @@ const APITracker = async (req, res, next) => {
                     userId: req.userId ? req.userId : null
                 }
             )
-
-            console.log("#".repeat(30))
-            console.log(await APITracker.findAll()) // só para ver se funciona
-            console.log("#".repeat(30))
         } catch(error){
             console.log("Não foi possível registrar o log. Info: ", error);
         }
@@ -28,3 +25,5 @@ const APITracker = async (req, res, next) => {
 
     next()
 }
+
+module.exports = APITracker
