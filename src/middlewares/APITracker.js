@@ -27,16 +27,15 @@ const APITracker = async (req, res, next) => {
             requestMethod: req.method,
             statusCode: res.statusCode,
             timestamp: new Date(),
-            userId: req.userId ? req.userId : null
+            userId: req.userId ? req.userId : null,
         }
 
         const result = await APIUsageLogService.register(APIUsageLogData)
 
         if(result.ok){
-            console.log("\x1b[32m Log de uso da API registrado com sucesso \x1b[0m")
-            console.log(result.value)
+            console.log(`\x1b[32m Log de uso da API registrado com sucesso [${new Date()}]\x1b[0m`)
         }else{
-            console.log("\x1b[31m Falha ao salvar log de uso da API \x1b[0m")
+            console.log(`\x1b[31m Falha ao salvar log de uso da API [${new Date()}] \x1b[0m`)
             console.log("Mensagem de erro: ", result.error)
         }
     })
