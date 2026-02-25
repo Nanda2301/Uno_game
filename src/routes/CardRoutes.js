@@ -10,7 +10,7 @@ router.get("/", cardController.findAll);
 router.get("/my-cards", authMiddleware, cardController.getMyCards);
 
 router.get("/:id", cardController.getById);
-router.put("/:id", cardController.update);
-router.delete("/:id", cardController.delete);
+router.put("/:id", authMiddleware, cardController.update);
+router.delete("/:id", authMiddleware, cardController.delete);
 
 module.exports = router;
