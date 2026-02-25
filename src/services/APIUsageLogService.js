@@ -35,6 +35,20 @@ class APIUsageLogService{
         }
     }
 
+    /**
+     * Contabiliza e agrupa todas as requisições registradas na API,
+     * organizando-as por endpoint e método HTTP.
+     *
+     * @async
+     * @method countRequest
+     * @memberof APIUsageLogService
+     *
+     * @returns {Promise<Result>} Retorna um Result de sucesso contendo:
+     * - `total_requests` {number} - Total geral de requisições registradas
+     * - `breakdown` {Object} - Requisições agrupadas por endpoint e método HTTP
+     *
+     * Em caso de erro, retorna um Result de falha com o erro ocorrido.
+     */
     async countRequest(){
         try{
             const allLogs = await APIUsageLog.findAll({raw: true})
@@ -58,6 +72,20 @@ class APIUsageLogService{
         }
     }
 
+    /**
+     * Contabiliza e agrupa todas as requisições registradas na API
+     * pelo código de status HTTP retornado.
+     *
+     * @async
+     * @method countStatusCode
+     * @memberof APIUsageLogService
+     *
+     * @returns {Promise<Result>} Retorna um Result de sucesso contendo um objeto
+     * onde cada chave é um código de status HTTP e o valor é a quantidade de
+     * vezes que foi retornado.
+     *
+     * Em caso de erro, retorna um Result de falha com o erro ocorrido.
+     */
     async countStatusCode(){
         try{
             const allLogs = await APIUsageLog.findAll({raw:true})
@@ -77,6 +105,20 @@ class APIUsageLogService{
         }
     }
 
+    /**
+     * Retorna o endpoint mais acessado da API,
+     * com base na contagem total de requisições registradas nos logs.
+     *
+     * @async
+     * @method mostPopularEndpoint
+     * @memberof APIUsageLogService
+     *
+     * @returns {Promise<Result>} Retorna um Result de sucesso contendo um objeto com:
+     * - `most_popular` {string} - Endpoint com maior número de acessos
+     * - `request_count` {number} - Total de requisições realizadas para esse endpoint
+     *
+     * Em caso de erro, retorna um Result de falha com o erro ocorrido.
+     */
     async mostPopularEndpoint(){
         try{
             const data = await APIUsageLog.findOne({
@@ -95,6 +137,23 @@ class APIUsageLogService{
         }
     }
 
+    /**
+     * Retorna estatísticas de tempo de resposta agrupadas por endpoint,
+     * incluindo os valores médio, mínimo e máximo de cada um.
+     *
+     * @async
+     * @method requestResponseTime
+     * @memberof APIUsageLogService
+     *
+     * @returns {Promise<Result>} Retorna um Result de sucesso contendo um objeto
+     * onde cada chave é um endpoint e o valor é um objeto com as estatísticas
+     * de tempo de resposta em milissegundos:
+     * - `avg` {number} - Tempo médio de resposta
+     * - `min` {number} - Tempo mínimo de resposta
+     * - `max` {number} - Tempo máximo de resposta
+     *
+     * Em caso de erro, retorna um Result de falha com o erro ocorrido.
+     */
     async requestResponseTime(){
         try{
 
