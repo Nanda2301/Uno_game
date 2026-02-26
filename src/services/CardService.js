@@ -116,8 +116,6 @@ class CardService {
             console.error(`Erro ao buscar carta ${id}:`, error);
             throw new Error('Falha na comunicação com o banco de dados');
         }
-
-        
     }
 
     async update(id, data) {
@@ -181,10 +179,19 @@ class CardService {
     }
 
     /**
-     * Veja as cartas na mão de um jogador
-     * 
-     * @param {number} gameId 
-     * @param {number} playerId 
+     * Retorna todas as cartas na mão de um jogador em uma partida específica.
+     * Busca apenas as cartas que estão na pilha "hand",
+     * ou seja, cartas que o jogador possui atualmente para jogar.
+     *
+     * @async
+     * @method seePlayerCards
+     * @memberof CardService
+     *
+     * @param {number} gameId    - ID da partida
+     * @param {number} playerId  - ID do jogador
+     *
+     * @returns {Promise<Card[]>} Lista de cartas na mão do jogador.
+     * Retorna um array vazio caso o jogador não possua cartas.
      */
     async seePlayerCards(gameId, playerId){
         const cards = await CardRepository.findAll({
@@ -200,6 +207,26 @@ class CardService {
         return cards
     }
 
+    /**
+     * Realiza o descarte de uma carta da mão do jogador na partida.
+     * Move a carta para a pilha de descarte, atualiza a carta no topo
+     * do descarte no jogo e desvincula a carta do jogador.
+     * Todas as operações são realizadas dentro de uma transação,
+     * garantindo consistência dos dados em caso de falha.
+     *
+     * @async
+     * @method jogarUmaCarta
+     * @memberof CardService
+     *
+     * @param {number} gameId   - ID da partida
+     * @param {number} playerId - ID do jogador que está descartando a carta
+     * @param {number} cardId   - ID da carta a ser descartada
+     *
+     * @returns {Promise<Result>} Retorna um Result de sucesso com os dados da carta descartada,
+     * ou um Result de falha nos seguintes cenários:
+     * - A carta não pertence ao jogador ou não está em sua mão
+     * - Erro durante a atualização do jogo ou da carta no banco de dados
+     */
     async jogarUmaCarta(gameId, playerId, cardId){
         const transaction = await sequelize.transaction()
         try{

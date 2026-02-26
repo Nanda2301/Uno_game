@@ -203,10 +203,28 @@ class GameController {
         }
     }
 
+    /**
+     * Controlador HTTP para a ação de descartar uma carta na partida.
+     * Extrai os dados da requisição e delega a lógica ao serviço responsável.
+     *
+     * @async
+     * @method jogarUmaCarta
+     * @memberof GameController
+     *
+     * @param {import('express').Request}  req  - Objeto de requisição do Express
+     * @param {import('express').Response} res  - Objeto de resposta do Express
+     * @param {import('express').NextFunction} next - Função para repasse de erros ao middleware de erros
+     *
+     * @returns {Promise<void>}
+     * Em caso de sucesso, retorna status 200 com a mensagem e os dados da carta descartada.
+     * Em caso de falha, repassa o erro ao middleware de tratamento de erros via `next`.
+     *
+     * @see GameService.jogarUmaCarta
+     */
     async jogarUmaCarta(req, res, next){
-        const gameId = req.params.id;
-        const playerId = req.userId;
-        const {cardId} = req.body;
+        const gameId = req.params.id; // ID da partida (extraído da URL)
+        const playerId = req.userId;  //  ID do jogador autenticado (injetado pelo middleware de autenticação)
+        const {cardId} = req.body;    // ID da carta a ser descartada
 
         const result = await GameService.jogarUmaCarta(gameId, playerId, cardId);
         if(result.ok) return res.status(result.status).json({message: "Jogador jogou a carta com sucesso", data: result.value});

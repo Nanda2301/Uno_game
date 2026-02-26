@@ -384,6 +384,21 @@ class GameService {
         return await CardService.seePlayerCards(gameId, playerId)
     }
 
+    /**
+     * Delega a ação de descartar uma carta ao serviço responsável.
+     *
+     * @async
+     * @method jogarUmaCarta
+     * @memberof GameService
+     *
+     * @param {number} gameId   - ID da partida
+     * @param {number} playerId - ID do jogador que está descartando a carta
+     * @param {number} cardId   - ID da carta a ser descartada
+     *
+     * @returns {Promise<Result>} Retorna o Result produzido por `CardService.jogarUmaCarta`
+     *
+     * @see CardService.jogarUmaCarta
+     */
     async jogarUmaCarta(gameId, playerId, cardId){
         return await CardService.jogarUmaCarta(gameId, playerId, cardId)
     }
