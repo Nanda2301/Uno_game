@@ -36,11 +36,12 @@ class Result {
    *
    * @static
    * @param {*} value - Valor a ser encapsulado
+   * @param {number} [status=200] - Código de status HTTP (padrão: 200)
    * @returns {Result} Instância de Result com ok = true e status 200
    */
 
-  static ok(value) {
-    return new Result(true, value, null, 200);
+  static ok(value, status=200) {
+    return new Result(true, value, null, status);
   }
 
     /**

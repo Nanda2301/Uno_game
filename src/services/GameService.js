@@ -1,6 +1,7 @@
 const GameRepository = require("../repositories/GameRepository");
 const GamePlayerRepository = require("../repositories/GamePlayerRepository");
 const CardService = require('./CardService');
+const Result = require("../config/result")
 
 /**
  * Verifica se o usuário é o criador do jogo
@@ -199,7 +200,7 @@ class GameService {
         }
 
         // Atualiza status do jogo
-        await GameRepository.update(game, {
+        await GameRepository.update(gameId, {
             status: 'in_progress'
         });
 
@@ -213,7 +214,7 @@ class GameService {
 
         this.addHistory(gameId, "System", `First card in discart pile: ${primeiraCarta.color} : ${primeiraCarta.value}`)
         // define como topo
-        await GameRepository.update(game, {
+        await GameRepository.update(gameId, {
             topDiscardCardId: primeiraCarta.id
         });
 
@@ -361,11 +362,14 @@ class GameService {
       );
     }
 
-    async update(id, data) {
-        const game = await GameRepository.findById(id);
-        if (!game) return null;
-
-        return await GameRepository.update(game, data);
+    async update(id, data, options={}) {
+        try{
+            const info = await GameRepository.update(id, data, options);
+            if(info) return Result.of(info);
+            return Result.fail(new Error("Game not found"), 401)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     async delete(id) {

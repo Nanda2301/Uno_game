@@ -13,7 +13,7 @@ class CardRepository {
         return await Card.findByPk(id);
     }
 
-    async update(id, data) {
+    async update(id, data, options={}) {
         
         const card = await this.findById(id)
         if(data.color) card.color = data.color;
@@ -21,7 +21,7 @@ class CardRepository {
         if(data.gameId) card.gameId = data.gameId;
         if(data.playerId) card.playerId = data.playerId;
         if(data.pile) card.pile = data.pile;
-        await card.save()
+        await card.save(options)
         return card
 
     }

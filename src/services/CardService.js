@@ -1,5 +1,8 @@
 const { where } = require("sequelize");
+const sequelize = require("../database")
 const CardRepository = require("../repositories/CardRepository");
+const Result = require("../config/result")
+const GameRepository = require("../repositories/GameRepository");
 
 
 const podeJogar = (cartaNoTopo) => (cartaJogada) => {
@@ -187,7 +190,8 @@ class CardService {
         const cards = await CardRepository.findAll({
             where:{
                 gameId,
-                playerId
+                playerId,
+                pile: "hand"
             }
         })
 
@@ -196,26 +200,42 @@ class CardService {
         return cards
     }
 
-    async jogarUmaCarta(gamId, playerId, cardId){
-        const card = await CardRepository.findOne({
-            where:{
-                id: cardId,
-                gameId: gamId,
-                playerId: playerId,
-                pile: 'hand'
-            }
-        });
+    async jogarUmaCarta(gameId, playerId, cardId){
+        const transaction = await sequelize.transaction()
+        try{
+            // Procura pela carta solicitada
+            const card = await CardRepository.findOne({
+                where:{
+                    id: cardId,
+                    gameId,
+                    playerId,
+                    pile: 'hand'
+                }
+            });
+            // A carta não pertence ao jogador ou não existe
+            if(!card) return Result.fail(new Error("Carta não pertence ao jogador"));
 
-        if(!card){
-            throw new Error("Carta não pertence ao jogador");
+            await GameRepository.update( gameId, 
+                {
+                    topDiscardCardId: cardId
+                },
+                {transaction}
+            )
+            await CardRepository.update(
+                cardId, 
+                {
+                    pile: 'discard',
+                    playerId: null
+                },
+                {transaction}
+            );
+                
+            await transaction.commit()
+            return Result.of(card)
+        }catch(error){
+            await transaction.rollback()
+            return Result.fail(error)
         }
-
-        await CardRepository.update(cardId, {
-            pile: 'discard',
-            playerId: null
-        });
-
-        return card;
     }
 }
 
