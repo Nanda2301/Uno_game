@@ -203,6 +203,19 @@ class GameController {
         }
     }
 
+    async jogarUmaCarta(req, res, next){
+        const gameId = req.params.id;
+        const playerId = req.userId;
+        const {cardId} = req.body;
+
+        try{
+            const result = await GameService.jogarUmaCarta(gameId, playerId, cardId);
+            return res.status(200).json({message: "Jogador jogou a carta com sucesso", data: result})
+        } catch(error){
+            next(error)
+        }
+    }
+
     async obterRanking(req, res, next) {
         try {
             const gameId = req.params.id;

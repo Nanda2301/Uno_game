@@ -379,6 +379,10 @@ class GameService {
     async seePlayerHand(gameId, playerId){
         return await CardService.seePlayerCards(gameId, playerId)
     }
+
+    async jogarUmaCarta(gameId, playerId, cardId){
+        return await CardService.jogarUmaCarta(gameId, playerId, cardId)
+    }
     
     async obterRankingPartida(gameId) {
         const jogadores = await GamePlayerRepository.findScoresByGameId(gameId);

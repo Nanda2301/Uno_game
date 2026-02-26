@@ -195,6 +195,28 @@ class CardService {
 
         return cards
     }
+
+    async jogarUmaCarta(gamId, playerId, cardId){
+        const card = await CardRepository.findOne({
+            where:{
+                id: cardId,
+                gameId: gamId,
+                playerId: playerId,
+                pile: 'hand'
+            }
+        });
+
+        if(!card){
+            throw new Error("Carta não pertence ao jogador");
+        }
+
+        await CardRepository.update(cardId, {
+            pile: 'discard',
+            playerId: null
+        });
+
+        return card;
+    }
 }
 
 module.exports = new CardService();

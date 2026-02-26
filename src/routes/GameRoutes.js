@@ -19,6 +19,7 @@ router.post("/:id/join",authMiddlewares, gameController.adicionarJogador);     /
 router.post("/:id/ready",authMiddlewares, gameController.marcarPronto);         // Marcar como pronto
 router.post("/:id/start",authMiddlewares, gameController.iniciarJogo);          // Iniciar jogo (criador + todos prontos)
 router.post("/:id/finish",authMiddlewares, gameController.finalizarJogo);       // Finalizar jogo (apenas criador)
+router.post("/:id/play", authMiddlewares, gameController.jogarUmaCarta);
 
 router.get('/:id/history',authMiddlewares, gameController.getHistory);
 router.get('/:id/ranking', gameController.obterRanking);
