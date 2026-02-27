@@ -72,58 +72,30 @@ class GameController {
     }
 
     async update(req, res, next) {
-        try {
-            const updatedGame = await gameService.update(req.params.id, req.body);
-
-            if (!updatedGame) {
-                return res.status(404).json({ error: "Game not found" });
-            }
-
-            return res.status(200).json(updatedGame);
-        } catch (error) {
-            next(error);
-        }
+        const result = await gameService.update(req.params.id, req.body);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
     async delete(req, res, next) {
-        try {
-            const deleted = await gameService.delete(req.params.id);
-
-            if (!deleted) {
-                return res.status(404).json({ error: "Game not found" });
-            }
-
-            return res.status(204).send();
-        } catch (error) {
-            next(error);
-        }
+        const result = await gameService.delete(req.params.id);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
-    async getHistory(req, res) {
+    async getHistory(req, res, next) {
         const gameId = req.params.id;
-
-        const history = gameService.getHistory(gameId);
-
-        return res.status(200).json(history);
+        const result = await gameService.getHistory(gameId);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
-    /**
-     * 
-     * @param {number} req 
-     * @param {number} res 
-     * @param {number} next 
-     * @returns 
-     */
     async seePlayerHand(req, res, next){
         const gameId = req.params.id;
         const playerId = req.userId
-
-        try{
-            const result = await GameService.seePlayerHand(gameId, playerId)
-            return res.status(200).json({"player cards": result})
-        }catch(error){
-            next(error)
-        }
+        const result = await GameService.seePlayerHand(gameId, playerId)
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
     /**
@@ -151,15 +123,10 @@ class GameController {
     }
 
     async obterRanking(req, res, next) {
-        try {
-            const gameId = req.params.id;
-
-            const ranking = await gameService.obterRankingPartida(gameId);
-
-            return res.status(200).json(ranking);
-        } catch (error) {
-            next(error);
-        }
+        const gameId = req.params.id;
+        const result = await gameService.obterRankingPartida(gameId);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 }
 
