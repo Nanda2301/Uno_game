@@ -3,6 +3,7 @@ const user = require("../models/User.js");
 class UserRepository{
     async create(data){
         const newUser = await user.create(data)
+        console.log(newUser)
         return {
             name: newUser.name,
             userName: newUser.userName,
@@ -25,8 +26,10 @@ class UserRepository{
     }
 
     async findByEmail(email){
-        return await user.findOne({where: {email: email},
-        attributes: { include: ['password'] } // Força o retorno da senha para comparação
+        return await user.findOne({
+            where: {email: email},
+            attributes: { include: ['password'] }, // Força o retorno da senha para comparação
+            raw: true
         });
     }
 

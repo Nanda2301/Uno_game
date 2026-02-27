@@ -1,28 +1,28 @@
-const User = require("../models/User");
+const {findUserByEmail} = require("./UserService")
 const TokenBlacklist = require("../models/TokenBlacklist");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Result = require("../config/result")
+
 
 class AuthService {
   async login(email, password) {
-    const user = await User.findOne({ where: { email } });
+    const result = await findUserByEmail(email);
+    if(!result.ok) return result
 
-    if (!user) {
-      throw new Error("Usuário não encontrado");
-    }
+    const user = result.value
 
     const senhaValida = await bcrypt.compare(password, user.password);
-    if (!senhaValida) {
-      throw new Error("Senha inválida");
-    }
+    if (!senhaValida) return Result.fail(new Error("Senha inválida"), 401)
 
+    const secret = process.env.JWT_SECRET || "fallback_secret_dev";
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      "secret",
+      secret,
       { expiresIn: "1h" }
     );
 
-    return { token };
+    return Result.of(token)
   }
 
   async logout(token) {

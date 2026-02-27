@@ -2,6 +2,15 @@
 const AuthService = require("../services/AuthService");
 
 class AuthController {
+
+  async login(req, res, next){
+    const {email, password} = req.body
+    const result = await AuthService.login(email, password)
+
+    if(result.ok) return res.status(result.status).json({token: result.value});
+    next(result.error)
+  }
+
   /**
    * Controlador HTTP para o logout do usuário autenticado.
    * Extrai o token JWT do cabeçalho da requisição e delega

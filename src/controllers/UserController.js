@@ -2,17 +2,9 @@ const userService = require("../services/UserService.js");
 
 class UserController {
     async create(req, res, next) {
-        try {
-            const result = await userService.create(req.body);
-
-            if (result.error) {
-                return res.status(400).json(result);
-            }
-
-            res.status(201).json(result);
-        } catch (error) {
-            next(error);
-        }
+        const result = await userService.create(req.body);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result.error)
     }
 
     async getById(req, res, next) {
@@ -55,16 +47,6 @@ class UserController {
                 return res.status(404).json({ error: "User not found" });
             }
             return res.status(204).send();
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    async login(req, res, next) {
-        try {
-            const { password, email } = req.body;
-            const { status, ...rest } = await userService.login(email, password);
-            return res.status(status).json(rest);
         } catch (error) {
             next(error);
         }

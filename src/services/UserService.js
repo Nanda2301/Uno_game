@@ -1,33 +1,21 @@
 const UserRepository = require('../repositories/UserRepository');
-const jwt = require('jsonwebtoken');
-const bcrypt = require("bcrypt");
+const Result = require("../config/result")
 
 async function create(data) {
+    if (!data.password) return Result.fail(new Error("Senha de usuário não informada!"), 404);
+    if (!data.userName) return Result.fail(new Error("Nome de jogador não informado!"), 404);
+    if (!data.name) return Result.fail(new Error("Nome de usuário não informado!"), 404);
+    if (!data.email) return Result.fail(new Error("Email do usuário não informado!"), 404);
 
-    if (!data.password) {
-        return { error: true, message: "Tem que enviar o password" };
+    try{
+        const emailExist = await UserRepository.emailExist(data.email);
+        if (emailExist) return Result.fail(new Error("Email do usuário não informado!"), 406);
+
+        const user = await UserRepository.create(data);
+        return Result.of(user)
+    }catch(error){
+        return Result.fail(error)
     }
-
-    if (!data.userName) {
-        return { error: true, message: "Tem que enviar o nome de usuário" };
-    }
-
-    if (!data.name || !data.email) {
-        return { error: true, message: "Preencha todos os campos" };
-    }
-
-    const emailExist = await UserRepository.emailExist(data.email);
-
-    if (emailExist) {
-        return { error: true, message: "Não pode repetir o email" };
-    }
-
-    const user = await UserRepository.create(data);
-
-    return {
-        error: false,
-        ...user
-    };
 }
 
 async function findById(id) {
@@ -46,23 +34,14 @@ async function deleteUser(id) {
     return await UserRepository.delete(id);
 }
 
-async function login(email, password) {
-    const user = await UserRepository.findByEmail(email);
-
-    if (!user) return { status: 401, message: "User not found" };
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return { status: 401, message: "Invalid password" };
-
-    const secret = process.env.JWT_SECRET || "fallback_secret_dev";
-
-    const token = jwt.sign(
-        { id: user.id, email: user.email },
-        secret,
-        { expiresIn: "1h" }
-    );
-
-    return { status: 200, token };
+async function findUserByEmail(email) {
+    try{
+        const user = await UserRepository.findByEmail(email);
+        if (!user) return Result.fail(new Error("User not found"), 404);
+        return Result.of(user)
+    }catch(error){
+        return Result.fail(error)
+    }
 }
 
 module.exports = {
@@ -71,5 +50,5 @@ module.exports = {
     update,
     findAll,
     delete: deleteUser,
-    login
+    findUserByEmail
 };
