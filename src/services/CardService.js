@@ -3,6 +3,7 @@ const sequelize = require("../database")
 const CardRepository = require("../repositories/CardRepository");
 const Result = require("../config/result")
 const GameRepository = require("../repositories/GameRepository");
+const { raw } = require("express");
 
 
 const podeJogar = (cartaNoTopo) => (cartaJogada) => {
@@ -67,11 +68,6 @@ const gerarCartasPretas = (gameId) => {
     );
 };
 
-const CardFunctor = (value) => ({
-    value,
-    map: (fn) => (value === null || value === undefined ? CardFunctor(null) : CardFunctor(fn(value))),
-    join: () => value
-});
 class CardService {
 
    
@@ -91,46 +87,66 @@ class CardService {
     }
 
     async create(data) {
-        return await CardRepository.create(data);
+        if (!data.color) return Result.fail(new Error("Cor da carta não informada!"), 400);
+        if (!data.value) return Result.fail(new Error("Valor da carta não informado!"), 400);
+        if (!data.gameId) return Result.fail(new Error("Id do jogo não informado!"), 400);
+        if (!data.pile) return Result.fail(new Error("Pilha não informada!"), 400);
+        try{
+            const newCard = await CardRepository.create(data);
+            return Result.ok(newCard, 201)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     async findAll() {
-        return await CardRepository.findAll();
+        try{
+            const data = await CardRepository.findAll();
+            return Result.of(data)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     async findById(id) {
         try {
-            if (!id) return null;
+            if (!id) return Result.fail(new Error("Id de carta não inserido!"), 400);
+
             const card = await CardRepository.findById(id);
-        
+            if(!card) return Result.fail("Carta não encontrada!", 404);
+
             // Uso de Functor para transformar o dado sem mutação direta
-            return CardFunctor(card)
+            return Result.of(card)
             .map(c => (c.toJSON ? c.toJSON() : c))
             .map(c => ({
                 ...c,
                 label: `${c.color.toUpperCase()} - ${c.value}`,
                 viewedAt: new Date().toISOString()
-            }))
-            .join();
+            }));
         } catch (error) {
-            console.error(`Erro ao buscar carta ${id}:`, error);
-            throw new Error('Falha na comunicação com o banco de dados');
+            return Result.fail(error)
         }
     }
 
     async update(id, data) {
-        const card = await CardRepository.findById(id);
-        if (!card) return null;
-
-        return await CardRepository.update(id, data);
+        try{
+            const cardUpdated = await CardRepository.update(id, data);
+            if(cardUpdated) return Result.of(cardUpdated);
+            return Result.fail(new Error("Carta não encontrada para update"), 404)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     async delete(id) {
-        const card = await CardRepository.findById(id);
-        if (!card) return null;
-
-        await CardRepository.delete(card);
-        return true;
+        try{
+            const card = await CardRepository.findById(id);
+            if (!card) return Result.fail(new Error("Card not found to remove"), 404);
+            await CardRepository.delete(card);
+            return Result.of({Mensage: "Removido com sucesso"})
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     async drawCard(gameId) {
@@ -194,17 +210,20 @@ class CardService {
      * Retorna um array vazio caso o jogador não possua cartas.
      */
     async seePlayerCards(gameId, playerId){
-        const cards = await CardRepository.findAll({
-            where:{
-                gameId,
-                playerId,
-                pile: "hand"
-            }
-        })
-
-        console.log("As cartas são: ", cards)
-
-        return cards
+        try{
+            const cards = await CardRepository.findAll({
+                where:{
+                    gameId,
+                    playerId,
+                    pile: "hand"
+                },
+                raw: true
+            })
+            console.log("As cartas são: ", cards)
+            return Result.of(cards)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     /**
@@ -266,4 +285,4 @@ class CardService {
     }
 }
 
-module.exports = new CardService();
+module.exports = new CardService()

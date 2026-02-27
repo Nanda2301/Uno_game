@@ -9,19 +9,6 @@
  * @property {*} value - Valor retornado em caso de sucesso (null em falha)
  * @property {*} error - Erro retornado em caso de falha (null em sucesso)
  * @property {number} status - Código de status HTTP associado ao resultado
- *
- * @example
- * // Criando um resultado de sucesso
- * const sucesso = Result.of({ id: 1, nome: "João" })
- * console.log(sucesso.ok)    // true
- * console.log(sucesso.value) // { id: 1, nome: "João" }
- *
- * @example
- * // Criando um resultado de falha
- * const falha = Result.fail("Usuário não encontrado", 404)
- * console.log(falha.ok)     // false
- * console.log(falha.error)  // "Usuário não encontrado"
- * console.log(falha.status) // 404
  */
 class Result {
   constructor(ok, value, error, status) {
@@ -74,10 +61,6 @@ class Result {
    *
    * @param {function(*): *} fn - Função de transformação aplicada ao valor
    * @returns {Result} Novo Result com o valor transformado, ou o Result de falha original
-   *
-   * @example
-   * const result = Result.of(5).map(x => x * 2)
-   * console.log(result.value) // 10
    */
   map(fn) {
     if (!this.ok) return this;
@@ -91,10 +74,6 @@ class Result {
    *
    * @param {function(*): Result} fn - Função que recebe o valor e retorna um novo Result
    * @returns {Result} Result retornado pela função, ou o Result de falha original
-   *
-   * @example
-   * const result = Result.of(5).flatMap(x => x > 3 ? Result.of("válido") : Result.fail("inválido"))
-   * console.log(result.value) // "válido"
    */
   flatMap(fn) {
     if (!this.ok) return this;

@@ -1,5 +1,6 @@
 // controllers/AuthController.js
 const AuthService = require("../services/AuthService");
+const Result = require("../config/result")
 
 class AuthController {
 
@@ -8,7 +9,7 @@ class AuthController {
     const result = await AuthService.login(email, password)
 
     if(result.ok) return res.status(result.status).json({token: result.value});
-    next(result.error)
+    next(result)
   }
 
   /**
@@ -38,7 +39,7 @@ class AuthController {
       const result = await AuthService.logout(token);
       return res.status(200).json(result);
     } catch (error) {
-      next(error);
+      next(Result.fail(error));
     }
   }
 }

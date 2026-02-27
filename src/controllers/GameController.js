@@ -3,20 +3,11 @@ const gameService = require("../services/GameService");
 
 class GameController {
     async create(req, res, next) {
-        try {
-            const creatorId = req.userId;
-
-            if (!creatorId) {
-                return res.status(400).json({
-                    error: "Creator ID é obrigatório"
-                });
-            }
-
-            const game = await gameService.create(req.body, creatorId);
-            return res.status(201).json(game);
-        } catch (error) {
-            next(error);
-        }
+        const creatorId = req.userId;
+        const result = await gameService.create(req.body, creatorId);
+        
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
     async findAll(req, res, next) {

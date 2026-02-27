@@ -1,18 +1,18 @@
 const logger = require('../config/logger');
 
-function errorMiddleware(err, req, res, next) {
+function errorMiddleware(resultError, req, res, next) {
+    const error = resultError.error
+    const statusCode = resultError.status
 
     logger.error({
-        message: err.message,
-        stack: err.stack,
+        message: error.message,
+        stack: error.stack,
         method: req.method,
         url: req.originalUrl,
         body: req.body
     });
-
-    res.status(500).json({
-        error: 'Erro interno do servidor'
-    });
+    
+    return res.status(statusCode).json({error: error.message});
 }
 
 module.exports = errorMiddleware;

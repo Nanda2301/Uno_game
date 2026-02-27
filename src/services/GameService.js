@@ -1,5 +1,6 @@
 const GameRepository = require("../repositories/GameRepository");
 const GamePlayerRepository = require("../repositories/GamePlayerRepository");
+const UserRepository = require("../repositories/UserRepository")
 const CardService = require('./CardService');
 const Result = require("../config/result")
 
@@ -69,29 +70,32 @@ class GameService {
     }
 
     async create(gameData, creatorId) {
-        if (!creatorId) {
-            throw new Error('Creator ID é obrigatório');
+        // << PODEMOS ADINCIONAR UMA TRANSACTION NESSE METODO  >>
+        try{
+            const player = UserRepository.findById(creatorId)
+            if(!player) return Result.fail(new Error("Jogador não existe!"), 400);
+
+            // Cria o jogo no banco
+            const game = await GameRepository.create({
+                ...gameData,
+                creatorId,
+                status: 'waiting'
+            });
+
+            // Adiciona o criador como primeiro jogador
+            await GamePlayerRepository.create({
+                gameId: game.id,
+                playerId: creatorId,
+                ready: true, // Criador já entra pronto
+                position: 1
+            });
+
+            // Gera o baralho de 108 cartas
+            await CardService.createDeck(game.id);
+            return Result.ok(game, 201)
+        }catch(error){
+            return Result.fail(error)
         }
-
-        // Cria o jogo no banco
-        const game = await GameRepository.create({
-            ...gameData,
-            creatorId,
-            status: 'waiting'
-        });
-
-        // Adiciona o criador como primeiro jogador
-        await GamePlayerRepository.create({
-            gameId: game.id,
-            playerId: creatorId,
-            ready: true, // Criador já entra pronto
-            position: 1
-        });
-
-        // Gera o baralho de 108 cartas
-        await CardService.createDeck(game.id);
-
-        return game;
     }
 
     async findAll() {
