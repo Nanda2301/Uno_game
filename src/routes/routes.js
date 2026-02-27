@@ -4,6 +4,7 @@ const userRoutes = require("./UserRoutes.js");
 const gameRoutes = require("./GameRoutes.js");
 const cardRoutes = require("./CardRoutes.js");
 const scoreRoutes = require("./ScoreRoutes.js"); 
+const statistic = require("./StatisticRoutes.js")
 
 const router = express.Router();
 
@@ -11,5 +12,6 @@ router.use("/users", userRoutes);
 router.use("/games", gameRoutes);
 router.use("/cards", cardRoutes);
 router.use("/scores", scoreRoutes);
+router.use("/stats", statistic)
 
 module.exports = router;

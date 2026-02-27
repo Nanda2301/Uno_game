@@ -1,8 +1,19 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
 
-
-// Tabela intermediária para jogadores em uma partida
+/**
+ * Modelo Sequelize que representa a tabela intermediária entre jogadores e partidas.
+ * Gerencia a associação many-to-many entre `User` e `Game`, armazenando
+ * informações específicas de cada jogador dentro de uma partida, como
+ * posição na mesa, status de prontidão e pontuação acumulada.
+ *
+ * @model GamePlayer
+ * @property {number}  gameId   - ID da partida associada (coluna: game_id)
+ * @property {number}  playerId - ID do jogador associado (coluna: player_id)
+ * @property {boolean} ready    - Indica se o jogador está pronto para iniciar (padrão: false)
+ * @property {number}  position - Posição do jogador na mesa (valores: 1, 2, 3 ou 4)
+ * @property {number}  score    - Pontuação acumulada do jogador na partida (padrão: 0)
+ */
 const GamePlayer = sequelize.define("GamePlayer", {
     gameId: {
         type: DataTypes.INTEGER,
