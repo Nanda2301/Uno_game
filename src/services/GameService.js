@@ -27,17 +27,11 @@ const temJogadoresSuficientes = (jogadores) =>
  */
 const podeIniciarJogo = (game, jogadores, userId) => {
     const validarCriador = ehCriador(game);
-    
-    return {
-        valido: validarCriador(userId) && 
-                todosProntos(jogadores) && 
-                temJogadoresSuficientes(jogadores),
-        erros: [
-            !validarCriador(userId) && 'Apenas o criador pode iniciar a partida',
-            !todosProntos(jogadores) && 'Nem todos os jogadores estão prontos',
-            !temJogadoresSuficientes(jogadores) && 'Mínimo de 2 jogadores necessário'
-        ].filter(Boolean) // Remove valores falsy
-    };
+    if(!validarCriador(userId)) return Result.fail(new Error('Apenas o criador pode iniciar a partida'), 401);
+    if(!todosProntos(jogadores)) return Result.fail(new Error('Nem todos os jogadores estão prontos'), 400);
+    if(!todosProntos(jogadores)) return Result.fail(new Error('Mínimo de 2 jogadores necessário'), 400);
+
+    return Result.ok({})
 };
 
 class GameService {
@@ -169,104 +163,86 @@ class GameService {
      * Marcar jogador como pronto
      */
     async marcarPronto(gameId, playerId) {
-        const jogador = await GamePlayerRepository.findOne(gameId, playerId);
-        
-        if (!jogador) {
-            return { error: 'Jogador não está nesta partida' };
+        try{
+            //procura jogador na partida
+            const jogador = await GamePlayerRepository.findOne(gameId, playerId);
+            if (!jogador) return Result.fail('Jogador não está nesta partida', 400);
+            //Atualiza o status do jogador para pronto
+            await GamePlayerRepository.update(jogador, { ready: true });
+            this.addHistory(gameId, `Player ${playerId}`, "ready")
+            return Result.of({ message: 'Jogador marcado como pronto' })
+        }catch(error){
+            return Result.fail(error)
         }
-
-        await GamePlayerRepository.update(jogador, { ready: true });
-        
-        this.addHistory(gameId, `Player ${playerId}`, "ready")
-        
-        return { message: 'Jogador marcado como pronto' };
-        
     }
 
     /**
      * INICIAR JOGO - Validação de criador e jogadores prontos
      */
     async iniciarJogo(gameId, userId) {
-        const game = await GameRepository.findById(gameId);
-        
-        if (!game) {
-            return { error: 'Jogo não encontrado' };
+        try{
+            // Procura pela partida solicitada
+            const game = await GameRepository.findById(gameId);
+            if(!game) return Result.fail(new Error("Partida não encontrada"), 404);
+
+            // Verifica se o jogo não começou
+            const jogoIniciado = game.status !== 'waiting'
+            if(jogoIniciado) return Result.fail(new Error("Jogo já foi iniciado ou finalizado"), 400);
+
+            // Verifica se está tudo certo para iniciar a partida
+            const jogadores = await GamePlayerRepository.findByGameId(gameId);
+            const validacao = podeIniciarJogo(game, jogadores, userId);
+            if (!validacao.ok) {
+                const mensage = `Não foi possível iniciar o jogo: ${validacao.error.mensage}`;
+                return Result.fail(new Error(mensage), validacao.status)
+            }
+
+            await GameRepository.update(gameId, {status: 'in_progress'}); // Atualiza status do jogo
+            this.addHistory(gameId, `Player ${userId}`, "Started the game")
+            await this.distribuirCartas(game.id); // distribui cartas
+
+            // compra a primeira carta do baralho
+            const primeiraCarta = await CardService.drawCard(game.id);
+            this.addHistory(gameId, "System", `First card in discart pile: ${primeiraCarta.color} : ${primeiraCarta.value}`)
+            
+            // define como topo
+            await GameRepository.update(gameId, {
+                topDiscardCardId: primeiraCarta.id
+            });
+
+            return Result.of({
+                message: "Jogo iniciado com sucesso",
+                topCard: primeiraCarta
+            })
+
+        }catch(error){
+            return Result.fail(error)
         }
-
-        if (game.status !== 'waiting') {
-            return { error: 'Jogo já foi iniciado ou finalizado' };
-        }
-
-        const jogadores = await GamePlayerRepository.findByGameId(gameId);
-
-        // VALIDAÇÃO FUNCIONAL
-        const validacao = podeIniciarJogo(game, jogadores, userId);
-
-        if (!validacao.valido) {
-            return { 
-                error: 'Não foi possível iniciar o jogo',
-                motivos: validacao.erros
-            };
-        }
-
-        // Atualiza status do jogo
-        await GameRepository.update(gameId, {
-            status: 'in_progress'
-        });
-
-        this.addHistory(gameId, `Player ${userId}`, "Started the game")
-
-        // distribui cartas
-        await this.distribuirCartas(game.id);
-
-        // compra a primeira carta do baralho
-        const primeiraCarta = await CardService.drawCard(game.id);
-
-        this.addHistory(gameId, "System", `First card in discart pile: ${primeiraCarta.color} : ${primeiraCarta.value}`)
-        // define como topo
-        await GameRepository.update(gameId, {
-            topDiscardCardId: primeiraCarta.id
-        });
-
-        return {
-            message: "Jogo iniciado com sucesso",
-            topCard: primeiraCarta
-        }
-
-        
     }
 
     /**
      * FINALIZAR JOGO - Apenas o criador pode
      */
     async finalizarJogo(gameId, userId) {
-        const game = await GameRepository.findById(gameId);
-        
-        if (!game) {
-            return { error: 'Jogo não encontrado' };
+        try{
+            const game = await GameRepository.findById(gameId);
+            if (!game) return Result.fail(new Error('Jogo não encontrado'), 404);
+            const jogoFinalizado = game.status === 'finished'
+            if(jogoFinalizado) return Result.fail(new Error('Jogo já foi finalizado'), 400);
+
+            // VALIDAÇÃO FUNCIONAL - Apenas criador
+            const validarCriador = ehCriador(game);
+            const naoEhCriador = !validarCriador(userId)
+            if (naoEhCriador) return Result.fail(new Error('Apenas o criador da partida pode finalizá-la'), 400);
+
+            const gameModified = await GameRepository.update(gameId, { status: 'finished' });
+            this.addHistory(gameId,`Player ${userId}`, "end the game");
+
+            return Result.of( {message: 'Jogo finalizado com sucesso!', game: gameModified })
+
+        }catch(error){
+            return Result.fail(error)
         }
-
-        if (game.status === 'finished') {
-            return { error: 'Jogo já foi finalizado' };
-        }
-
-        // VALIDAÇÃO FUNCIONAL - Apenas criador
-        const validarCriador = ehCriador(game);
-
-        if (!validarCriador(userId)) {
-            return { 
-                error: 'Apenas o criador da partida pode finalizá-la'
-            };
-        }
-
-        await GameRepository.update(game, { status: 'finished' });
-
-        this.addHistory(gameId,`Player ${userId}`, "end the game");
-
-        return { 
-            message: 'Jogo finalizado com sucesso!',
-            game: { ...game.toJSON(), status: 'finished' }
-        };
     }
 
     async abandonarJogo(gameId, playerId) {

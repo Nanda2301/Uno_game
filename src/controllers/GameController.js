@@ -11,9 +11,6 @@ class GameController {
      * @method create
      * @memberof GameController
      *
-     * @param {Object} req.body   - Dados da partida a ser criada
-     * @param {number} req.userId - ID do usuário autenticado (injetado pelo middleware de autenticação)
-     *
      * @returns {Promise<void>}
      * Em caso de sucesso, retorna o status e os dados da partida criada.
      * Em caso de falha, repassa o erro ao middleware de tratamento de erros via `next`.
@@ -21,8 +18,9 @@ class GameController {
      * @see GameService.create
      */
     async create(req, res, next) {
-        const creatorId = req.userId;
-        const result = await gameService.create(req.body, creatorId);
+        const creatorId = req.userId;   // ID do usuário autenticado (injetado pelo middleware de autenticação)
+        const data = req.body           // Dados da partida a ser criada
+        const result = await gameService.create(data, creatorId);
         
         if(result.ok) return res.status(result.status).json(result.value);
         next(result)
@@ -50,86 +48,27 @@ class GameController {
     }
 
     async marcarPronto(req, res, next) {
-        try {
-            const gameId = req.params.id;
-            const playerId = req.userId || req.body.playerId;
-
-            if (!playerId) {
-                return res.status(400).json({
-                    error: "Player ID é obrigatório"
-                });
-            }
-
-            const resultado = await gameService.marcarPronto(gameId, playerId);
-
-            if (resultado.error) {
-                return res.status(400).json(resultado);
-            }
-
-            return res.status(200).json(resultado);
-        } catch (error) {
-            next(error);
-        }
+        const gameId = req.params.id;
+        const playerId = req.userId || req.body.playerId;
+        const result = await gameService.marcarPronto(gameId, playerId);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
     async iniciarJogo(req, res, next) {
-        try {
-            const gameId = req.params.id;
-            const userId = req.userId || req.body.userId;
-
-            if (!userId) {
-                return res.status(401).json({
-                    error: "Usuário não autenticado"
-                });
-            }
-
-            const resultado = await gameService.iniciarJogo(gameId, userId);
-
-            if (resultado.error) {
-                return res.status(403).json(resultado);
-            }
-
-            return res.status(200).json(resultado);
-        } catch (error) {
-            next(error);
-        }
+        const gameId = req.params.id;
+        const userId = req.userId || req.body.userId;
+        const result = await gameService.iniciarJogo(gameId, userId);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
     async finalizarJogo(req, res, next) {
-        try {
-            const gameId = req.params.id;
-            const userId = req.userId || req.body.userId;
-
-            if (!userId) {
-                return res.status(401).json({
-                    error: "Usuário não autenticado"
-                });
-            }
-
-            const resultado = await gameService.finalizarJogo(gameId, userId);
-
-            if (resultado.error) {
-                return res.status(403).json(resultado);
-            }
-
-            return res.status(200).json(resultado);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    async getStatus(req, res) {
-        try {
-            const { id } = req.params;
-
-            const gameStatus = await gameService.getFullStatus(id);
-
-            return res.status(200).json(gameStatus);
-        } catch (error) {
-            return res.status(400).json({
-                message: error.message
-            });
-        }
+        const gameId = req.params.id;
+        const userId = req.userId || req.body.userId;
+        const result = await gameService.finalizarJogo(gameId, userId);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
     async update(req, res, next) {
@@ -194,10 +133,6 @@ class GameController {
      * @async
      * @method jogarUmaCarta
      * @memberof GameController
-     *
-     * @param {import('express').Request}  req  - Objeto de requisição do Express
-     * @param {import('express').Response} res  - Objeto de resposta do Express
-     * @param {import('express').NextFunction} next - Função para repasse de erros ao middleware de erros
      *
      * @returns {Promise<void>}
      * Em caso de sucesso, retorna status 200 com a mensagem e os dados da carta descartada.
