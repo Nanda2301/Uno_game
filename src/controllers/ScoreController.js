@@ -2,15 +2,8 @@ const scoreService = require("../services/ScoreService");
 
 class ScoreController {
     async create(req, res, next) {
-        try {
             const score = await scoreService.create(req.body);
-            res.status(201).json(score);
-        } catch (error) {
-            if (error.message.includes('incompletos')) {
-                return res.status(400).json({ error: error.message });
-            }
-            next(error);
-        }
+            if(score.ok) return res.status(score.status).json(score.value);
     }
 
     async findAll(req, res, next) {
@@ -66,18 +59,6 @@ class ScoreController {
             const playerId = parseInt(req.params.playerId);
             const stats = await scoreService.obterEstatisticasJogador(playerId);
             res.status(200).json(stats);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    async update(req, res, next) {
-        try {
-            const updatedScore = await scoreService.update(req.params.id, req.body);
-            if (!updatedScore) {
-                return res.status(404).json({ error: "Score not found" });
-            }
-            res.status(200).json(updatedScore);
         } catch (error) {
             next(error);
         }
