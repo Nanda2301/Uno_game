@@ -55,8 +55,17 @@ class GameService {
         });
     }
 
-    getHistory(gameId){
-        return this.history[gameId] || [];
+    async getHistory(gameId){
+        try{
+            const gameExists = await GameRepository.gameExists(gameId)
+            if(!gameExists) return Result.fail(new Error("Partida não encontrada!"), 404);
+            
+            const history = this.history[gameId]
+            if(!history) return Result.ok("Nenhum histórico foi encontrado para a partida", 204);
+            return Result.of(history)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     clearHistory(gameId){
@@ -352,18 +361,21 @@ class GameService {
         try{
             const info = await GameRepository.update(id, data, options);
             if(info) return Result.of(info);
-            return Result.fail(new Error("Game not found"), 401)
+            return Result.fail(new Error("Jogo não encontrado"), 401)
         }catch(error){
             return Result.fail(error)
         }
     }
 
     async delete(id) {
-        const game = await GameRepository.findById(id);
-        if (!game) return null;
-
-        await GameRepository.delete(game);
-        return true;
+        try{
+            const game = await GameRepository.findById(id);
+            if (!game) Result.fail(new Error("Jogo não encontrado!"), 401);
+            await GameRepository.delete(game);
+            return Result.of({mensage: "Jogo removido com sucesso!"})
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     async seePlayerHand(gameId, playerId){
@@ -390,19 +402,23 @@ class GameService {
     }
     
     async obterRankingPartida(gameId) {
-        const jogadores = await GamePlayerRepository.findScoresByGameId(gameId);
-
-        if (!jogadores.length) {
-            return { ranking: [] };
-        }
-
-        return {
-            ranking: jogadores.map((jogador, index) => ({
-                posicao: index + 1,
+        try{
+            // Verifica se o jogo existe
+            const gameExists = await GameRepository.gameExists(gameId);
+            if(!gameExists) return Result.fail(new Error("Partida não encontrada"), 404);
+            
+            // Procura pelos jogadores na partida e monta o ranking
+            const jogadores = await GamePlayerRepository.findScoresByGameId(gameId);
+            const ranking = jogadores.map((jogador, index) =>({
+                position: index + 1,
                 playerId: jogador.playerId,
                 score: jogador.score
             }))
-        };
+            return Result.of({ranking})
+            
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 }
 

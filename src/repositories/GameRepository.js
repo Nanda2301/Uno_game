@@ -44,6 +44,12 @@ class GameRepository {
     async delete(game) {
         return await game.destroy();
     }
+
+    async gameExists(id){
+        const game = await this.findById(id)
+        if(!game) return false;
+        return true
+    }
 }
 
 module.exports = new GameRepository();

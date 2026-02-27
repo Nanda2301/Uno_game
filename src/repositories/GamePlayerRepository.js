@@ -44,7 +44,8 @@ class GamePlayerRepository {
     return await GamePlayer.findAll({
         where: { gameId },
         attributes: ['playerId', 'score', 'position'],
-        order: [['score', 'DESC']]
+        order: [['score', 'DESC']],
+        raw: true
     });
 }
 
