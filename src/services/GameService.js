@@ -99,49 +99,55 @@ class GameService {
     }
 
     async findAll() {
-        return await GameRepository.findAll();
+        try{
+            const games = await GameRepository.findAll();
+            return Result.of(games)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     async findById(id) {
-        const result = await GameRepository.findById(id);
-        console.log(result)
-        return result
+        try{
+            const result = await GameRepository.findById(id);
+            return Result.of(result)
+        }catch(error){
+            return Result.fail(error)
+        }
     }
 
     /**
      * Adicionar jogador à partida
      */
     async adicionarJogador(gameId, playerId) {
-        const game = await GameRepository.findById(gameId);
-        
-        if (!game) {
-            return { error: 'Jogo não encontrado' };
+        try{
+            const game = await GameRepository.findById(gameId);
+
+            // Verificação de consistência do jogo
+            if(!game) return Result.fail(new Error("Jogo não encontrado!"));
+            if (game.status !== 'waiting') return Result.fail(new Error("Jogo já iniciado ou finalizado"));
+
+            // Verifica se tem espaço na sala
+            const jogadoresAtuais = await GamePlayerRepository.findByGameId(gameId);
+            const salaCheia = jogadoresAtuais.length >= game.maxPlayers
+            if (salaCheia) return Result.fail(new Error("Jogo já está cheio"));
+
+            // Verifica se jogador já está na partida
+            const jaEstaNoJogo = jogadoresAtuais.some(j => j.playerId === playerId);
+            if (jaEstaNoJogo) return Result.fail(new Error("Jogador já está nesta partida"));
+
+            const novoJogador = await GamePlayerRepository.create({
+                gameId,
+                playerId,
+                ready: false,
+                position: jogadoresAtuais.length + 1
+            });
+
+            return Result.ok(novoJogador, 201)
+
+        }catch(error){
+            return Result.fail(error)
         }
-
-        if (game.status !== 'waiting') {
-            return { error: 'Jogo já iniciado ou finalizado' };
-        }
-
-        const jogadoresAtuais = await GamePlayerRepository.findByGameId(gameId);
-
-        if (jogadoresAtuais.length >= game.maxPlayers) {
-            return { error: 'Jogo já está cheio' };
-        }
-
-        // Verifica se jogador já está na partida
-        const jaEstaNoJogo = jogadoresAtuais.some(j => j.playerId === playerId);
-        if (jaEstaNoJogo) {
-            return { error: 'Jogador já está nesta partida' };
-        }
-
-        const novoJogador = await GamePlayerRepository.create({
-            gameId,
-            playerId,
-            ready: false,
-            position: jogadoresAtuais.length + 1
-        });
-
-        return novoJogador;
     }
     
     async distribuirCartas(gameId) {

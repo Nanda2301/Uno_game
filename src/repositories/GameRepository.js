@@ -7,7 +7,7 @@ class GameRepository {
     }
 
     async findAll() {
-        return await Game.findAll();
+        return await Game.findAll({raw:true});
     }
 
     async findById(id, raw=true) {
