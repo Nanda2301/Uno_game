@@ -11,8 +11,9 @@ class UserRepository{
     } 
     
     async findById(id){
-        const result =  (await user.findByPk(id)).get({plain: true})
-        if(result){
+        const userInstance = await user.findByPk(id);
+        if (!userInstance) return null; // Retorna null se não achar
+        const result = userInstance.get({ plain: true });{
             return {
                 name: result.name,
                 userName: result.userName,
