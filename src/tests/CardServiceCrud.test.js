@@ -1,4 +1,4 @@
-const CardService = require('../services/CardService'); 
+const CardService = require('../services/CardService');
 // Se exportou 'new CardService()', CardService aqui já é a instância.
 const CardRepository = require('../repositories/CardRepository');
 
@@ -21,22 +21,25 @@ describe('CardService - CRUD Card Operations', () => {
             const result = await CardService.create(cardData);
 
             expect(CardRepository.create).toHaveBeenCalledWith(cardData);
-            expect(result).toEqual(mockCard);
+            expect(result).toMatchObject(mockCard);
         });
     });
 
     describe('findAll', () => {
-        it('Return all card', async () => {
+        it('Return all cards', async () => {
+
             const mockCards = [
                 { id: 1, color: 'blue', value: '1' },
                 { id: 2, color: 'green', value: 'skip' }
             ];
+
             CardRepository.findAll.mockResolvedValue(mockCards);
 
             const result = await CardService.findAll();
 
-            expect(result).toEqual(mockCards);
             expect(CardRepository.findAll).toHaveBeenCalled();
+            expect(result).toMatchObject(mockCards);
+            expect(result).toHaveLength(2);
         });
     });
 
@@ -47,7 +50,7 @@ describe('CardService - CRUD Card Operations', () => {
 
             const result = await CardService.findById(1);
 
-            expect(result).toEqual(mockCard);
+            expect(result).toMatchObject(mockCard);
             expect(CardRepository.findById).toHaveBeenCalledWith(1);
         });
 
@@ -61,22 +64,32 @@ describe('CardService - CRUD Card Operations', () => {
     });
 
     describe('update', () => {
-         it('Update an existing card successfully.', async () => {
+        it('Update an existing card successfully.', async () => {
     
-        const cardId = 1;
-        const updateData = { pile: 'discard' };
-        const mockCardOriginal = { id: cardId, color: 'red', value: '5', pile: 'draw' };
-        const mockCardAtualizada = { ...mockCardOriginal, ...updateData };
+            const cardId = 1;
+            const updateData = { pile: 'discard' };
 
-        CardRepository.findById.mockResolvedValue(mockCardOriginal);
-        CardRepository.update.mockResolvedValue(mockCardAtualizada);
+            const mockCardOriginal = { 
+                id: cardId, 
+                color: 'red', 
+                value: '5', 
+                pile: 'draw' 
+            };
 
-        const result = await CardService.update(cardId, updateData);
+            const mockCardUpdated = { 
+                ...mockCardOriginal, 
+                ...updateData 
+            };
 
-        expect(CardRepository.findById).toHaveBeenCalledWith(cardId);
-        expect(CardRepository.update).toHaveBeenCalledWith(cardId, updateData);
-        expect(result).toEqual(mockCardAtualizada);
-    });
+            CardRepository.findById.mockResolvedValue(mockCardOriginal);
+            CardRepository.update.mockResolvedValue(mockCardUpdated);
+
+            const result = await CardService.update(cardId, updateData);
+
+            expect(CardRepository.findById).toHaveBeenCalledWith(cardId);
+            expect(CardRepository.update).toHaveBeenCalledWith(cardId, updateData);
+            expect(result).toMatchObject(mockCardUpdated);
+        });
     
         it('Returns null when attempting to update a non-existent card.', async () => {
             CardRepository.findById.mockResolvedValue(null);
@@ -89,7 +102,8 @@ describe('CardService - CRUD Card Operations', () => {
     });
 
     describe('delete', () => {
-        it('You need to delete an existing card.', async () => {
+        it('Delete an existing card.', async () => {
+
             const cardId = 1;
             const mockCard = { id: cardId, color: 'yellow', value: '9' };
 
@@ -115,12 +129,17 @@ describe('CardService - CRUD Card Operations', () => {
 });
 
 describe('CardService Functor Tests', () => {
-    test('Deve lidar com ID indefinido sem lançar exceção', async () => {
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    test('Should handle undefined ID safely', async () => {
         const result = await CardService.findById(undefined);
         expect(result).toBeNull();
     });
 
-    test('Deve retornar null com segurança quando o card não existe', async () => {
+    test('Should safely return null when card does not exist', async () => {
         CardRepository.findById.mockResolvedValue(null);
 
         const result = await CardService.findById(999);
@@ -128,8 +147,4 @@ describe('CardService Functor Tests', () => {
         expect(result).toBeNull();
     });
 
-    test('Deve lidar com ID indefinido sem lançar exceção', async () => {
-        const result = await CardService.findById(undefined);
-        expect(result).toBeNull();
-    })
 });

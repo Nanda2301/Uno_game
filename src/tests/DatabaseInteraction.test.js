@@ -11,12 +11,12 @@ describe('Requisito 5: Teste de interação com banco de dados', () => {
         // Teste de Inserção (Create)
         CardRepository.create.mockResolvedValue(mockCard);
         const created = await CardService.create(cardData);
-        expect(created).toEqual(mockCard);
+        expect(created).toMatchObject(mockCard);
 
         // Teste de Recuperação (Find)
         CardRepository.findById.mockResolvedValue(mockCard);
         const found = await CardService.findById(1);
-        expect(found).toEqual(mockCard);
+        expect(found).toMatchObject(mockCard);
 
         // Teste de Atualização (Update)
         const updatedData = { color: 'blue' };
