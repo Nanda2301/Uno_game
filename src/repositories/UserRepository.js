@@ -3,6 +3,7 @@ const user = require("../models/User.js");
 class UserRepository{
     async create(data){
         const newUser = await user.create(data)
+        console.log(newUser)
         return {
             name: newUser.name,
             userName: newUser.userName,
@@ -11,22 +12,16 @@ class UserRepository{
     } 
     
     async findById(id){
-        const result =  (await user.findByPk(id)).get({plain: true})
-        if(result){
-            return {
-                name: result.name,
-                userName: result.userName,
-                email: result.email,
-                createdAt: result.createdAt,
-                updatedAt: result.updatedAt,
-            }
-        }
-        return {}
+        const result =  await user.findByPk(id, {raw: true})
+        return result
+        
     }
 
     async findByEmail(email){
-        return await user.findOne({where: {email: email},
-        attributes: { include: ['password'] } // Força o retorno da senha para comparação
+        return await user.findOne({
+            where: {email: email},
+            attributes: { include: ['password'] }, // Força o retorno da senha para comparação
+            raw: true
         });
     }
 
@@ -53,13 +48,12 @@ class UserRepository{
     }           }   
 
     async delete(id){
-        const userToDelete =  (await user.findByPk(id))
+        const userToDelete = await user.findByPk(id)
         if(!userToDelete){
             return null
         }
         await userToDelete.destroy()
         return true
-
     }
 
     async emailExist(email) {

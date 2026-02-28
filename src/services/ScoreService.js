@@ -1,3 +1,4 @@
+const Result = require("../config/result");
 const ScoreRepository = require("../repositories/ScoreRepository");
 
 /**
@@ -61,94 +62,118 @@ const obterTopJogadores = (n) => (ranking) =>
 
 class ScoreService {
     async create(data) {
-        // Validação simples
-        if (!data.playerId || !data.gameId || data.score === undefined) {
-            throw new Error('Dados incompletos para criar score');
+        try{
+            // Validação simples
+            if (!data.playerId || !data.gameId || data.score === undefined) {
+                throw new Error('Dados incompletos para criar score');
+            }
+
+            const scoreNewPlayer = await ScoreRepository.create(data);
+        
+            return Result.of({message: "Score criado com sucesso!", score: scoreNewPlayer});
+
+        }catch(error){
+            return Result.fail(error)
         }
         
-        return await ScoreRepository.create(data);
     }
 
     async findAll() {
-        return await ScoreRepository.findAll();
+        try{
+            const scores = await ScoreRepository.findAll();
+            return Result.of({message: "Scores encontrados com sucesso", score: scores})
+        } catch(error){
+            return Result.fail(error)
+        }
+         
     }
 
     async findById(id) {
-        return await ScoreRepository.findById(id);
-    }
-
-    async update(id, data) {
-        const score = await ScoreRepository.findById(id);
-        if (!score) return null;
-
-        return await ScoreRepository.update(score, data);
+        try{
+            const scoreById = await ScoreRepository.findById(id);
+            return Result.of({message: "Score do jogador encontrado", score: scoreById})
+        } catch(error){
+            return Result.fail(error)
+        } 
     }
 
     async delete(id) {
-        const score = await ScoreRepository.findById(id);
-        if (!score) return null;
+        try{
+            const score = await ScoreRepository.findById(id);
+        if (!score) return Result.fail(new Error("Score não encontrado"), 404);
 
         await ScoreRepository.delete(score);
-        return true;
+        return Result.of({message:"Score deletado"});
+
+        }catch(error){
+            return Result.fail(error)
+        } 
     }
 
     /**
      * Obter ranking geral usando funções puras
      */
     async obterRankingGeral() {
-        const todosScores = await ScoreRepository.findAll();
+        try{
+            const todosScores = await ScoreRepository.findAll();
         
-        if (!todosScores || todosScores.length === 0) {
-            return {
-                ranking: [],
-                somaTotal: 0,
-                totalPartidas: 0
+            if (!todosScores || todosScores.length === 0) return Result.of({message: "O ranking está vazio no momento"})
+            
+            const scores = {
+                ranking: formatarRanking(todosScores),
+                somaTotal: calcularSomaTotal(todosScores),
+                totalPartidas: todosScores.length
             };
+
+            return Result.of({message: "Ranking obtido com sucesso!", scores: scores})
+
+        }catch(error){
+            return Result.fail(error)
         }
         
-        return {
-            ranking: formatarRanking(todosScores),
-            somaTotal: calcularSomaTotal(todosScores),
-            totalPartidas: todosScores.length
-        };
     }
 
     /**
      *Obter top 10 jogadores
      */
     async obterTop10() {
-        const { ranking } = await this.obterRankingGeral();
-        const pegarTop10 = obterTopJogadores(10);
+        try{
+            const { ranking } = await this.obterRankingGeral();
+            const pegarTop10 = obterTopJogadores(10);
+            
+            return Result.of({message: "Top 10 obtido com sucesso!", pegarTop10: pegarTop10(ranking)});
+
+        }catch(error){
+            return Result.fail(error)
+        }
         
-        return pegarTop10(ranking);
     }
 
     /**
      Estatísticas de um jogador específico
      */
     async obterEstatisticasJogador(playerId) {
-        const todosScores = await ScoreRepository.findAll();
-        const scoresDoJogador = todosScores.filter(s => s.playerId === playerId);
-        
-        if (scoresDoJogador.length === 0) {
-            return {
+        try{
+            const todosScores = await ScoreRepository.findAll();
+            const scoresDoJogador = todosScores.filter(s => s.playerId === playerId);
+            
+            if (scoresDoJogador.length === 0) return Result.of({message: "Não há estatísticas para o jogador no momento"})
+            
+            const total = calcularSomaTotal(scoresDoJogador);
+            
+            const estatistica = {
                 playerId,
-                pontuacaoTotal: 0,
-                partidas: 0,
-                media: 0
+                pontuacaoTotal: total,
+                partidas: scoresDoJogador.length,
+                media: total / scoresDoJogador.length,
+                melhorScore: Math.max(...scoresDoJogador.map(s => s.score)),
+                piorScore: Math.min(...scoresDoJogador.map(s => s.score))
             };
-        }
-        
-        const total = calcularSomaTotal(scoresDoJogador);
-        
-        return {
-            playerId,
-            pontuacaoTotal: total,
-            partidas: scoresDoJogador.length,
-            media: total / scoresDoJogador.length,
-            melhorScore: Math.max(...scoresDoJogador.map(s => s.score)),
-            piorScore: Math.min(...scoresDoJogador.map(s => s.score))
-        };
+
+            return Result.of({message: "Estatísticas obtidas com sucesso!", estatistica: estatistica})
+        }catch(error){
+            return Result.fail(error)
+        }  
     }
 }
 
