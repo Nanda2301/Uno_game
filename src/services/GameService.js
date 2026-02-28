@@ -258,6 +258,53 @@ class GameService {
         };
     }
 
+    /**
+ * Lógica para o jogador comprar uma carta se não tiver jogadas válidas
+ */
+    async comprarSeNaoPuderJogar(gameId, playerId) {
+        const game = await GameRepository.findById(gameId);
+        const mao = await CardService.seePlayerCards(gameId, playerId);
+        const topo = await this.topoDescarte(gameId);
+
+        // Verifica se o jogador já possui alguma carta que pode ser jogada
+        const temJogadaValida = mao.some(carta =>
+            carta.color === topo.color || 
+            carta.value === topo.value || 
+            carta.color === 'WILD'
+        );
+        
+        if (temJogadaValida) {
+            return { error: 'Você possui cartas que podem ser jogadas' };
+        }
+
+        // Se não tiver jogada, compra uma carta do baralho
+        const cartaComprada = await CardService.drawToPlayer(gameId, playerId);
+    
+        this.addHistory(gameId, `Player ${playerId}`, `Compreu uma carta: ${cartaComprada.color} ${cartaComprada.value}`);
+
+        // Após comprar, verifica se a carta nova pode ser jogada
+        const podeJogarComprada = 
+        cartaComprada.color === topo.color || 
+        cartaComprada.value === topo.value || 
+        cartaComprada.color === 'WILD';
+
+        if (!podeJogarComprada) {
+            // Se ainda não puder jogar, passa o turno automaticamente
+            await this.proximoTurno(gameId);
+            return {
+                message: 'Carta comprada não pode ser jogada. Turno passado.', 
+                carta: cartaComprada,
+                turnoPassado: true
+            };
+        }
+        
+        return {
+            message: 'Você comprou uma carta que pode ser jogada!', 
+            carta: cartaComprada,
+            turnoPassado: false 
+        };
+    }
+
     async abandonarJogo(gameId, playerId) {
         const game = await GameRepository.findById(gameId);
         if (!game) return { error: 'Jogo não encontrado' };
@@ -350,6 +397,35 @@ class GameService {
         this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
 
         return novaPosicao;
+    }
+
+    async aplicarInverter(gameId) {
+        const game = await GameRepository.findById(gameId);
+    
+        // Inverte a direção: 1 vira -1, e -1 vira 1
+        const novaDirecao = game.direction * -1;
+    
+        await GameRepository.update(game, {
+            direction: novaDirecao
+        });
+        
+        this.addHistory(gameId, "System", `Direção de jogo invertida para: ${novaDirecao === 1 ? 'Horário' : 'Anti-horário'}`);
+    
+        // No UNO, se houver apenas 2 jogadores, o Reverse funciona como um Skip
+        const jogadores = await GamePlayerRepository.findByGameId(gameId);
+        if (jogadores.length === 2) {
+            await this.proximoTurno(gameId);
+        }
+    }
+
+    async aplicarPular(gameId) {
+        // Primeiro avanço: passa o turno do jogador que jogou o Skip
+        await this.proximoTurno(gameId);
+    
+        // Segundo avanço: pula o próximo jogador
+        const jogadorPuladoPosicao = await this.proximoTurno(gameId);
+    
+        this.addHistory(gameId, "System", `Jogador na posição ${jogadorPuladoPosicao} foi pulado`);
     }
 
 
