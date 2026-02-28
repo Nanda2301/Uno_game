@@ -83,7 +83,7 @@ class CardController {
      * @returns {Promise<void>} Status 200 com a confirmação da remoção, ou repassa o erro via `next`
      */
     async delete(req, res, next) {
-        const deleted = await cardService.delete(req.params.id);
+        const result = await cardService.delete(req.params.id);
         if(result.ok) return res.status(result.status).json(result.value);
         next(result)
     }
