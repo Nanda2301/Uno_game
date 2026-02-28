@@ -29,7 +29,7 @@ const podeIniciarJogo = (game, jogadores, userId) => {
     const validarCriador = ehCriador(game);
     if(!validarCriador(userId)) return Result.fail(new Error('Apenas o criador pode iniciar a partida'), 401);
     if(!todosProntos(jogadores)) return Result.fail(new Error('Nem todos os jogadores estão prontos'), 400);
-    if(!todosProntos(jogadores)) return Result.fail(new Error('Mínimo de 2 jogadores necessário'), 400);
+    if(!temJogadoresSuficientes(jogadores)) return Result.fail(new Error('Mínimo de 2 jogadores necessário'), 400);
 
     return Result.ok({})
 };
