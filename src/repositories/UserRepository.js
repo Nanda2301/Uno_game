@@ -48,13 +48,12 @@ class UserRepository{
     }           }   
 
     async delete(id){
-        const userToDelete =  (await user.findByPk(id))
+        const userToDelete = await user.findByPk(id)
         if(!userToDelete){
             return null
         }
         await userToDelete.destroy()
         return true
-
     }
 
     async emailExist(email) {

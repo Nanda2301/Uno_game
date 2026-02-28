@@ -1,70 +1,97 @@
 const userService = require("../services/UserService.js");
 
+/**
+ * Controlador HTTP responsável pelas operações de usuários.
+ * Delega a lógica de negócio ao `UserService` e gerencia
+ * as respostas HTTP e o repasse de erros.
+ *
+ * @class UserController
+ */
 class UserController {
+
+    /**
+     * Cria um novo usuário com os dados fornecidos no corpo da requisição.
+     *
+     * @async
+     * @method create
+     * @param {Object} req.body - Dados do usuário a ser criado
+     * @returns {Promise<void>} Status 200 com os dados do usuário criado, ou repassa o erro via `next`
+     */
     async create(req, res, next) {
         const result = await userService.create(req.body);
         if(result.ok) return res.status(result.status).json(result.value);
-        next(result.error)
+        next(result)
     }
 
+    /**
+     * Retorna um usuário pelo seu ID.
+     *
+     * @async
+     * @method getById
+     * @param {number} req.params.id - ID do usuário a ser buscado
+     * @returns {Promise<void>} Status 200 com os dados do usuário, ou repassa o erro via `next`
+     */
     async getById(req, res, next) {
-        try {
-            const user = await userService.findById(req.params.id);
-            if (!user) {
-                return res.status(404).json({ error: "User not found" });
-            }
-            return res.status(200).json(user);
-        } catch (error) {
-            next(error);
-        }
+        const result = await userService.findById(req.params.id);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
+    /**
+     * Atualiza os dados do usuário autenticado.
+     *
+     * @async
+     * @method update
+     * @param {number} req.userId - ID do usuário autenticado (injetado pelo middleware de autenticação)
+     * @param {Object} req.body   - Campos a serem atualizados
+     * @returns {Promise<void>} Status 200 com os dados atualizados, ou repassa o erro via `next`
+     */
     async update(req, res, next) {
-        try {
-            const updatedUser = await userService.update(req.params.id, req.body);
-            if (!updatedUser) {
-                return res.status(404).json({ message: "User not found" });
-            }
-            return res.status(200).json(updatedUser);
-        } catch (error) {
-            next(error);
-        }
+        const result = await userService.update(req.userId, req.body);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
+    /**
+     * Retorna todos os usuários cadastrados.
+     *
+     * @async
+     * @method findAll     *
+     * @returns {Promise<void>} Status 200 com a lista de usuários, ou repassa o erro via `next`
+     */
     async findAll(req, res, next) {
-        try {
-            const users = await userService.findAll();
-            return res.status(200).json(users);
-        } catch (error) {
-            next(error);
-        }
+        const result = await userService.findAll();
+        console.log(`consult`, result)
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
+    /**
+     * Remove um usuário pelo seu ID.
+     *
+     * @async
+     * @method delete
+     * @param {number} req.params.id - ID do usuário a ser removido
+     * @returns {Promise<void>} Status 200 com a confirmação da remoção, ou repassa o erro via `next`
+     */
     async delete(req, res, next) {
-        try {
-            const deleted = await userService.delete(req.params.id);
-            if (!deleted) {
-                return res.status(404).json({ error: "User not found" });
-            }
-            return res.status(204).send();
-        } catch (error) {
-            next(error);
-        }
+        const result = await userService.delete(req.params.id);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
+    /**
+     * Retorna os dados do próprio usuário autenticado.
+     *
+     * @async
+     * @method aboutMe
+     * @param {number} req.userId - ID do usuário autenticado (injetado pelo middleware de autenticação)
+     * @returns {Promise<void>} Status 200 com os dados do usuário autenticado, ou repassa o erro via `next`
+     */
     async aboutMe(req, res, next){
-        try {
-            const user = await userService.findById(req.userId);
-
-            if (!user) {
-            return res.status(404).json({ error: "Usuário não encontrado" });
-            }
-
-            return res.json(user);
-        } catch (err) {
-            next(err)
-        }
-
+        const result = await userService.findById(req.userId);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 }
 
