@@ -250,6 +250,7 @@ class CardService {
         const transaction = await sequelize.transaction()
         try{
             // Procura pela carta solicitada
+
             const card = await CardRepository.findOne({
                 where:{
                     id: cardId,

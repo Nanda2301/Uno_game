@@ -339,7 +339,7 @@ class GameService {
         if (novaPosicao > total) novaPosicao = 1;
         
         if (novaPosicao < 1) novaPosicao = total;
-        await GameRepository.update(game, {
+        await GameRepository.update(gameId, {
             currentPlayerPosition: novaPosicao
         });
 
@@ -417,6 +417,45 @@ class GameService {
             return Result.of({ranking})
             
         }catch(error){
+            return Result.fail(error)
+        }
+    }
+
+    async comprarSeNaoPuderJogar(gameId, playerId){
+        try{
+            const topoResultado = await this.topoDescarte(gameId);
+            
+            const topo = topoResultado.value;
+
+            const resultadoMao = await this.seePlayerHand(gameId, playerId);
+            if(!resultadoMao.ok) return resultadoMao;
+
+            const mao = resultadoMao.value;
+
+            const podeJogar = CardService.validarJogada(topo);
+
+            const cartaJogavel = mao.find(c => podeJogar(c));
+            console.log("cheguei aqui 1")
+
+            if (cartaJogavel){
+                console.log("cheguei aqui 2")
+                return Result.of({message: "Jogador possui carta jogável", podeJogar: true})
+                
+            }
+
+            const novaCarta = await CardService.drawToPlayer(gameId, playerId);
+            console.log("cheguei aqui 6")
+
+            if(podeJogar(novaCarta)){
+                console.log("cheguei aqui 3")
+                return Result.of({message: "Jogador possui carta jogável", carta: novaCarta})
+            }
+            console.log("cheguei aqui 4")
+            await this.proximoTurno(gameId);
+            console.log("cheguei aqui 5")
+
+            return Result.of({message:"Carta comprada não é jogável. Turno passado.", carta: novaCarta })
+        } catch(error){
             return Result.fail(error)
         }
     }
