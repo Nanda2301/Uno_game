@@ -1233,7 +1233,6 @@ Resposta:
 | POST | `/api/games/:id/ready` | ✅ **Novo:** Marcar como pronto |
 | POST | `/api/games/:id/start` | 🚀 **Novo:** Iniciar jogo (criador + validações) |
 | POST | `/api/games/:id/finish` | 🏁 **Novo:** Finalizar jogo (apenas criador) |
-| DELETE | `/api/games/:id` | Deletar partida |
 
 **Criar Jogo:**
 
@@ -1242,34 +1241,31 @@ Resposta:
 **Entrar na Partida:**
 ![alt text](images/image12.png)
 
-**Exemplo - Iniciar Jogo (COM VALIDAÇÕES):**
-```json
-POST /api/games/1/start
-{
-  "userId": 1
-}
+**Marcar como pronto**
+![alt text](images/image13.png)
 
-// ✅ Sucesso (criador + todos prontos):
-{
-  "message": "Jogo iniciado com sucesso!",
-  "game": {
-    "id": 1,
-    "status": "in_progress"
-  }
-}
+**Iniciar Jogo**
+![alt text](images/image14.png)
 
-// ❌ Erro (não é criador):
-{
-  "error": "Não foi possível iniciar o jogo",
-  "motivos": ["Apenas o criador pode iniciar a partida"]
-}
+**Finalizar Jogo**
+![alt text](images/image15.png)
 
-// ❌ Erro (jogadores não prontos):
-{
-  "error": "Não foi possível iniciar o jogo",
-  "motivos": ["Nem todos os jogadores estão prontos"]
-}
-```
+**Histórico do Jogo**
+![alt text](images/image16.png)
+
+**Ranking do Jogo**
+![alt text](images/image17.png)
+
+**Mostrar Jogos**
+![alt text](images/image18.png)
+
+**Jogar uma carta**
+![alt text](images/image19.png)
+
+**Comprar carta se não tiver carta jogável**
+![alt text](images/image20.png)
+
+
 
 ---
 
@@ -1283,24 +1279,18 @@ POST /api/games/1/start
 | PUT | `/api/cards/:id` | Atualizar carta |
 | DELETE | `/api/cards/:id` | Deletar carta |
 
-**Estrutura de Carta (com efeitos):**
-```json
-{
-  "id": 1,
-  "gameId": 1,
-  "color": "red",
-  "value": "skip",
-  "especial": true,
-  "efeito": "PULAR_PROXIMO"
-}
-```
+**Criar Carta**
+![alt text](images/image21.png)
 
-**Efeitos disponíveis:**
-- `skip` → `PULAR_PROXIMO`
-- `reverse` → `INVERTER_ORDEM`
-- `draw2` → `COMPRAR_2`
-- `wild` → `ESCOLHER_COR`
-- `wild_draw4` → `COMPRAR_4_E_ESCOLHER_COR`
+**Listar todas as Cartas**
+![alt text](images/image22.png)
+
+**Buscar Carta por ID**
+![alt text](images/image23.png)
+
+**Atualizar Carta**
+![alt text](images/image24.png)
+
 
 ---
 
@@ -1314,60 +1304,26 @@ POST /api/games/1/start
 | GET | `/api/scores/ranking/geral` | 🏆 **Novo:** Ranking completo |
 | GET | `/api/scores/ranking/top10` | 🥇 **Novo:** Top 10 jogadores |
 | GET | `/api/scores/player/:playerId/stats` | 📊 **Novo:** Estatísticas de jogador |
-| PUT | `/api/scores/:id` | Atualizar pontuação |
 | DELETE | `/api/scores/:id` | Deletar pontuação |
 
-**Exemplo - Criar Score:**
-```json
-POST /api/scores
-{
-  "playerId": 1,
-  "gameId": 1,
-  "score": 500
-}
-```
+**Criar nova Pontuação**
+![alt text](images/image25.png)
 
-**Exemplo - Ranking Geral (usando `.reduce()` e `.map()`):**
-```json
-GET /api/scores/ranking/geral
+**Listar todas as pontuações**
+![alt text](images/image26.png)
 
-// Resposta:
-{
-  "ranking": [
-    {
-      "posicao": 1,
-      "playerId": 3,
-      "pontuacaoTotal": 1250,
-      "quantidadePartidas": 5,
-      "mediaScore": 250
-    },
-    {
-      "posicao": 2,
-      "playerId": 1,
-      "pontuacaoTotal": 980,
-      "quantidadePartidas": 4,
-      "mediaScore": 245
-    }
-  ],
-  "somaTotal": 2230,
-  "totalPartidas": 9
-}
-```
+**Buscar Pontuação por ID**
+![alt text](images/image27.png)
 
-**Exemplo - Estatísticas de Jogador:**
-```json
-GET /api/scores/player/1/stats
+**Ranking Geral**
+![alt text](images/image28.png)
 
-// Resposta:
-{
-  "playerId": 1,
-  "pontuacaoTotal": 980,
-  "partidas": 4,
-  "media": 245,
-  "melhorScore": 350,
-  "piorScore": 150
-}
-```
+**Estatísticas do Jogador**
+![alt text](images/image29.png)
+
+**Deletar pontuação**
+![alt text](images/image30.png)
+
 
 ---
 
