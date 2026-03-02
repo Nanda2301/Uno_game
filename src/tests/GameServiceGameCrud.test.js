@@ -96,23 +96,25 @@ describe('GameService - Operações CRUD de Jogos', () => {
             const mockGame = { id: gameId, title: 'Old Title', status: 'waiting' };
             const updatedGame = { ...mockGame, ...updateData };
 
-            GameRepository.findById.mockResolvedValue(mockGame);
             GameRepository.update.mockResolvedValue(updatedGame);
 
             const result = await GameService.update(gameId, updateData);
 
-            expect(GameRepository.findById).toHaveBeenCalledWith(gameId);
-            expect(GameRepository.update).toHaveBeenCalledWith(mockGame, updateData);
-            expect(result).toEqual(updatedGame);
+            expect(GameRepository.update).toHaveBeenCalledWith(gameId, updateData, {});
+            expect(result.value).toMatchObject(updatedGame);
         });
 
-        it('deve retornar null se tentar atualizar um jogo inexistente', async () => {
-            GameRepository.findById.mockResolvedValue(null);
+        it('Não deve atualizar um jogo inexistente', async () => {
+            GameRepository.update.mockResolvedValue(null);
 
             const result = await GameService.update(999, { status: 'finished' });
 
-            expect(result).toBeNull();
-            expect(GameRepository.update).not.toHaveBeenCalled();
+            expect(GameRepository.update).toHaveBeenCalledWith(
+                999,
+                {status: 'finished'},
+                expect.any(Object)
+            );
+            expect(result.ok).toEqual(false);
         });
     });
 

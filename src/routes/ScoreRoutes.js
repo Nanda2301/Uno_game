@@ -13,7 +13,6 @@ const cacheMiddleware = createMemoizationMiddleware(cacheConfig);
 router.post("/", scoreController.create);
 router.get("/", scoreController.findAll);
 router.get("/:id", scoreController.getById);
-router.put("/:id", scoreController.update);
 router.delete("/:id", scoreController.delete);
 
 router.get("/ranking/geral", cacheMiddleware, scoreController.obterRanking);              
