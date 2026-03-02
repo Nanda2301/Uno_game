@@ -196,11 +196,11 @@ class CardService {
         return cards
     }
 
-    async jogarUmaCarta(gamId, playerId, cardId){
+    async jogarUmaCarta(gameId, playerId, cardId){
         const card = await CardRepository.findOne({
             where:{
                 id: cardId,
-                gameId: gamId,
+                gameId,
                 playerId: playerId,
                 pile: 'hand'
             }
