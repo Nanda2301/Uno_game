@@ -76,7 +76,7 @@ class GameService {
         // << PODEMOS ADINCIONAR UMA TRANSACTION NESSE METODO  >>
         try{
             const player = UserRepository.findById(creatorId)
-            if(!player) return Result.fail(new Error("Jogador não existe!"), 400);
+            if(!player) return Result.fail(new Error("Jogador não existe!"), 404);
 
             // Cria o jogo no banco
             const game = await GameRepository.create({
@@ -112,8 +112,9 @@ class GameService {
 
     async findById(id) {
         try{
-            const result = await GameRepository.findById(id);
-            return Result.of(result)
+            const game = await GameRepository.findById(id);
+            if(!game) return Result.fail("Game not found", 404);
+            return Result.of(game)
         }catch(error){
             return Result.fail(error)
         }
@@ -202,16 +203,16 @@ class GameService {
             const jogadores = await GamePlayerRepository.findByGameId(gameId);
             const validacao = podeIniciarJogo(game, jogadores, userId);
             if (!validacao.ok) {
-                const mensage = `Não foi possível iniciar o jogo: ${validacao.error.mensage}`;
+                const mensage = `Não foi possível iniciar o jogo: ${validacao.error.message}`;
                 return Result.fail(new Error(mensage), validacao.status)
             }
 
             await GameRepository.update(gameId, {status: 'in_progress'}); // Atualiza status do jogo
             this.addHistory(gameId, `Player ${userId}`, "Started the game")
-            await this.distribuirCartas(game.id); // distribui cartas
+            await this.distribuirCartas(gameId); // distribui cartas
 
             // compra a primeira carta do baralho
-            const primeiraCarta = await CardService.drawCard(game.id);
+            const primeiraCarta = await CardService.drawCard(gameId);
             this.addHistory(gameId, "System", `First card in discart pile: ${primeiraCarta.color} : ${primeiraCarta.value}`)
             
             // define como topo
@@ -297,12 +298,12 @@ class GameService {
     }
 
     async jogadorDaVez(gameId) {
-    const game = await GameRepository.findById(gameId);
+        const game = await GameRepository.findById(gameId);
 
-    const jogador = await GamePlayerRepository.findByPosition(
-        gameId,
-        game.currentPlayerPosition
-      );
+        const jogador = await GamePlayerRepository.findByPosition(
+            gameId,
+            game.currentPlayerPosition
+        );
 
        return jogador;
     }
@@ -331,21 +332,24 @@ class GameService {
 
     async proximoTurno(gameId) {
         const game = await GameRepository.findById(gameId);
-
         const jogadores = await GamePlayerRepository.findByGameId(gameId);
+        console.log(jogadores)
         const total = jogadores.length;
         let novaPosicao = game.currentPlayerPosition + game.direction;
         
         if (novaPosicao > total) novaPosicao = 1;
-        
         if (novaPosicao < 1) novaPosicao = total;
+
         await GameRepository.update(gameId, {
             currentPlayerPosition: novaPosicao
         });
 
         this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
 
-        return novaPosicao;
+        return {
+            novaPosicao,
+            player: jogadores[novaPosicao - 1]
+        };
     }
 
 
@@ -398,7 +402,44 @@ class GameService {
      * @see CardService.jogarUmaCarta
      */
     async jogarUmaCarta(gameId, playerId, cardId){
-        return await CardService.jogarUmaCarta(gameId, playerId, cardId)
+        // Verifica se o jogo existe
+        const gameResult = await this.findById(gameId)
+        if(!gameResult.ok) return gameResult
+
+        const jogadorDaVez = await this.jogadorDaVez(gameId)
+        const naoEhJogadorDaVez = jogadorDaVez.playerId !== playerId
+        if(naoEhJogadorDaVez) return Result.fail("Não tente trapacear, você não é o jogador da vez", 400)
+
+        // Joga a carta na mesa. Se tiver problema, retorna um Result sem ok válido
+        const resultPlayCard = await CardService.jogarUmaCarta(gameResult.value, playerId, cardId)
+        if(!resultPlayCard.ok) return resultPlayCard;
+
+        // Atualiza o topo da pilha de descarte
+        const updateResult = await this.update ( gameId, { topDiscardCardId: cardId})
+        if(!updateResult.ok) return updateResult
+
+        const playedCard = resultPlayCard.value
+        const nextPlayer = await this.proximoTurno(gameId);
+
+        // Caso seja uma carta especial de bloqueio
+        if (playedCard.value === "skip"){
+            const realNextPlayer = await this.proximoTurno(gameId);
+            return Result.of({
+                "nextPlayerPosition": realNextPlayer.novaPosicao,
+                "nextPlayer": realNextPlayer.player,
+                "skippedPlayer": nextPlayer.player
+            })
+        } 
+
+        if (playedCard.value === "draw2"){
+            await CardService.drawToPlayer(gameId, nextPlayer.player.playerId)
+            await CardService.drawToPlayer(gameId, nextPlayer.player.playerId)
+        }
+
+        return Result.of({
+            "nextPlayerPosition": nextPlayer.novaPosicao,
+            "nextPlayer": nextPlayer.player
+        })
     }
     
     async obterRankingPartida(gameId) {
