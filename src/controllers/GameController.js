@@ -119,7 +119,7 @@ class GameController {
 
         const result = await GameService.jogarUmaCarta(gameId, playerId, cardId);
         if(result.ok) return res.status(result.status).json({message: "Jogador jogou a carta com sucesso", data: result.value});
-        return next(result.error)
+        return next(result)
     }
 
     async obterRanking(req, res, next) {

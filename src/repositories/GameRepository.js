@@ -36,6 +36,7 @@ class GameRepository {
         if(data.status) game.status = data.status;
         if(data.maxPlayers) game.maxPlayers = data.maxPlayers;
         if(data.topDiscardCardId) game.topDiscardCardId = data.topDiscardCardId;
+        if(data.currentPlayerPosition) game.currentPlayerPosition = data.currentPlayerPosition;
         await game.save(options)
 
         return game.dataValues
