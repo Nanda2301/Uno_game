@@ -406,6 +406,10 @@ class GameService {
         const gameResult = await this.findById(gameId)
         if(!gameResult.ok) return gameResult
 
+        const jogadorDaVez = await this.jogadorDaVez(gameId)
+        const naoEhJogadorDaVez = jogadorDaVez.playerId !== playerId
+        if(naoEhJogadorDaVez) return Result.fail("Não tente trapacear, você não é o jogador da vez", 400)
+
         // Joga a carta na mesa. Se tiver problema, retorna um Result sem ok válido
         const resultPlayCard = await CardService.jogarUmaCarta(gameResult.value, playerId, cardId)
         if(!resultPlayCard.ok) return resultPlayCard;
