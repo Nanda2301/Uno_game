@@ -13,8 +13,6 @@ Start the development server with `npm run dev`
 
 ### 1. (`CardService.js`)
 
-**O que é:** Transformar uma função que recebe múltiplos argumentos em uma sequência de funções que recebem um argumento por vez.
-
 **Aplicação:**
 ```javascript
 /*
@@ -1185,6 +1183,7 @@ Json de Entrada:
 
 
 Json de Saída: 
+
 ![UserLeave](images/image2.png)
 
 
@@ -1215,9 +1214,11 @@ Resposta:
 ![alt text](images/image8.png)
 
 **Pegando todos Users** 
+
 ![alt text](images/image9.png)
 
 **Deletando um User**
+
 ![alt text](images/image10.png)
 
 
@@ -1233,6 +1234,11 @@ Resposta:
 | POST | `/api/games/:id/ready` | ✅ **Novo:** Marcar como pronto |
 | POST | `/api/games/:id/start` | 🚀 **Novo:** Iniciar jogo (criador + validações) |
 | POST | `/api/games/:id/finish` | 🏁 **Novo:** Finalizar jogo (apenas criador) |
+| GET  | `/api/games/:id/history` |Pegar histórico do jogo |
+| POST  | `/api/games/:id/play` | Jogar uma carta |
+| GET  | `/api/games/:id/ranking` | Ranking do Jogo |
+
+
 
 **Criar Jogo:**
 
