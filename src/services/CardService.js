@@ -246,39 +246,20 @@ class CardService {
      * - A carta não pertence ao jogador ou não está em sua mão
      * - Erro durante a atualização do jogo ou da carta no banco de dados
      */
-    async jogarUmaCarta(gameId, playerId, cardId){
-        const transaction = await sequelize.transaction()
+    async jogarUmaCarta(game, playerId, cardId){
         try{
-            // Procura pela carta solicitada
-            const card = await CardRepository.findOne({
+            const card = await CardRepository.findOne({   // Procura pela carta solicitada
                 where:{
                     id: cardId,
-                    gameId,
+                    gameId: game.id,
                     playerId,
                     pile: 'hand'
                 }
             });
             // A carta não pertence ao jogador ou não existe
             if(!card) return Result.fail(new Error("Carta não pertence ao jogador"));
-
-            
-
-            await GameRepository.update( gameId, 
-                {
-                    topDiscardCardId: cardId
-                },
-                {transaction}
-            )
-            await CardRepository.update(
-                cardId, 
-                {
-                    pile: 'discard',
-                    playerId: null
-                },
-                {transaction}
-            );
-                
-            await transaction.commit()
+            // Atualiza as informações da carta
+            await CardRepository.update( cardId, { pile: 'discard', playerId: null } );
             return Result.of(card)
         }catch(error){
             await transaction.rollback()
