@@ -250,7 +250,6 @@ class CardService {
         const transaction = await sequelize.transaction()
         try{
             // Procura pela carta solicitada
-
             const card = await CardRepository.findOne({
                 where:{
                     id: cardId,
@@ -261,6 +260,8 @@ class CardService {
             });
             // A carta não pertence ao jogador ou não existe
             if(!card) return Result.fail(new Error("Carta não pertence ao jogador"));
+
+            
 
             await GameRepository.update( gameId, 
                 {

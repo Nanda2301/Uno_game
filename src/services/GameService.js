@@ -345,7 +345,10 @@ class GameService {
 
         this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
 
-        return novaPosicao;
+        return {
+            novaPosicao,
+            player: jogadores[novaPosicao - 1]
+        };
     }
 
 
@@ -398,7 +401,25 @@ class GameService {
      * @see CardService.jogarUmaCarta
      */
     async jogarUmaCarta(gameId, playerId, cardId){
-        return await CardService.jogarUmaCarta(gameId, playerId, cardId)
+        const resultPlayCard = await CardService.jogarUmaCarta(gameId, playerId, cardId)
+        if(!resultPlayCard.ok) return resultPlayCard;
+
+        const playedCard = resultPlayCard.value
+        if (playedCard.value === "skip"){
+            const skippedPlayer = await this.proximoTurno(gameId);
+            const nextPlayer = await this.proximoTurno(gameId);
+            return Result.of({
+                "nextPlayerPosition": nextPlayer.novaPosicao,
+                "nextPlayer": nextPlayer.player,
+                "skippedPlayer": skippedPlayer.player
+            })
+        } 
+
+        const nextPlayer = await this.proximoTurno(gameId);
+        return Result.of({
+            "nextPlayerPosition": nextPlayer.novaPosicao,
+            "nextPlayer": nextPlayer.player
+        })
     }
     
     async obterRankingPartida(gameId) {
