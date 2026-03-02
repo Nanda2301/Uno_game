@@ -202,7 +202,7 @@ class GameService {
             const jogadores = await GamePlayerRepository.findByGameId(gameId);
             const validacao = podeIniciarJogo(game, jogadores, userId);
             if (!validacao.ok) {
-                const mensage = `Não foi possível iniciar o jogo: ${validacao.error.mensage}`;
+                const mensage = `Não foi possível iniciar o jogo: ${validacao.error.message}`;
                 return Result.fail(new Error(mensage), validacao.status)
             }
 
