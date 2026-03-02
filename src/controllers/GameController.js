@@ -136,6 +136,14 @@ class GameController {
         if(result.ok) return res.status(result.status).json(result.value)
         next(result)
     }
+
+    async abandonarjogo(req, res, next){
+        const gameId = req.params.id;
+        const playerId = req.userId;
+        const result = await GameService.abandonarJogo(gameId, playerId);
+        if (result.ok) return res.status(result.status).json(result.value);
+        next(result)
+    }
 }
 
 module.exports = new GameController();
