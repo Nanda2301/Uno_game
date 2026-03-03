@@ -499,6 +499,10 @@ class GameService {
 
     async comprarSeNaoPuderJogar(gameId, playerId){
         try{
+            const game = await GameRepository.findById(gameId);
+            if(!game) return Result.fail("O jogo não foi encontrado", 404)
+
+            if(game.status !='in_progress') return Result.fail("O jogo não está em andamento, você não pode comprar uma carta", 400)
             const topoResultado = await this.topoDescarte(gameId);
             
             const topo = topoResultado.value;
