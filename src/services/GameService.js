@@ -410,7 +410,7 @@ class GameService {
         try{
             const game = await GameRepository.findById(id);
             if (!game) Result.fail(new Error("Jogo não encontrado!"), 401);
-            await GameRepository.delete(game);
+            await GameRepository.delete(id);
             return Result.of({mensage: "Jogo removido com sucesso!"})
         }catch(error){
             return Result.fail(error)

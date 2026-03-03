@@ -42,8 +42,13 @@ class GameRepository {
         return game.dataValues
     }
 
-    async delete(game) {
-        return await game.destroy();
+    async delete(id) {
+       const gameToDelete = await Game.findByPk(id)
+       if(!gameToDelete){
+            return null
+       }
+       await gameToDelete.destroy()
+       return true
     }
 
     async gameExists(id){
