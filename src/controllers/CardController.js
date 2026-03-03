@@ -1,102 +1,91 @@
 const cardService = require("../services/CardService");
 
+/**
+ * Controlador HTTP responsável pelas operações CRUD de cartas.
+ * Delega a lógica de negócio ao `CardService` e gerencia
+ * as respostas HTTP e o repasse de erros.
+ *
+ * @class CardController
+ */
 class CardController {
+
+    /**
+     * Cria uma nova carta com os dados fornecidos no corpo da requisição.
+     *
+     * @async
+     * @method create
+     * @param {Object} req.body - Dados da carta a ser criada
+     * @param {import('express').Request}  req          - Objeto de requisição do Express
+     * @param {import('express').Response} res          - Objeto de resposta do Express
+     * @param {import('express').NextFunction} next     - Função para repasse de erros
+     * 
+     * @returns {Promise<void>} Status 200 com os dados da carta criada, ou repassa o erro via `next`
+     */
     async create(req, res, next) {
-        try {
-            const card = await cardService.create(req.body);
-            return res.status(201).json(card);
-        } catch (error) {
-            next(error);
-        }
+        const result = await cardService.create(req.body);
+        if(result.ok) return res.status(result.status).json(result.value);
+        console.log(result.error)
+        next(result)
     }
 
+    /**
+     * Retorna todas as cartas cadastradas.
+     *
+     * @async
+     * @method findAll
+     * @returns {Promise<void>} Status 200 com a lista de cartas, ou repassa o erro via `next`
+     */
     async findAll(req, res, next) {
-        try {
-            const cards = await cardService.findAll();
-            return res.status(200).json(cards);
-        } catch (error) {
-            next(error);
-        }
+        const result = await cardService.findAll();
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
+    /**
+     * Retorna uma carta pelo seu ID.
+     *
+     * @async
+     * @method getById
+     * @param {number} req.params.id - ID da carta a ser buscada
+     * @returns {Promise<void>} Status 200 com os dados da carta, ou repassa o erro via `next`
+     */
     async getById(req, res, next) {
-        try {
-            const card = await cardService.findById(req.params.id);
-
-            if (!card) {
-                return res.status(404).json({ error: "Card not found" });
-            }
-
-            return res.status(200).json(card);
-        } catch (error) {
-            next(error);
-        }
+        const result = await cardService.findById(req.params.id);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 
-    async getMyCards(req, res, next) {
-        try {
-            const playerId = req.user.id;
-            const playerName = req.user.name;
-
-            const hand = await cardService.getPlayerHand(playerId);
-
-            return res.status(200).json({
-                player: playerName,
-                hand
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-
+    /**
+     * Atualiza os dados de uma carta existente.
+     *
+     * @async
+     * @method update
+     * @param {number} req.params.id - ID da carta a ser atualizada
+     * @param {Object} req.body      - Campos a serem atualizados
+     * @returns {Promise<void>} Status 200 com os dados atualizados, ou repassa o erro via `next`
+     */
     async update(req, res, next) {
-        try {
-            const updatedCard = await cardService.update(
+        const result = await cardService.update(
                 req.params.id,
                 req.body
-            );
-
-            if (!updatedCard) {
-                return res.status(404).json({ error: "Card not found" });
-            }
-
-            return res.status(200).json(updatedCard);
-        } catch (error) {
-            next(error);
-        }
-    }
-    async deal(req, res, next) {
-    try {
-        const { gameId, players, cardsPerPlayer } = req.body;
-
-        const resultado = await cardService.dealCards(
-            gameId,
-            players,
-            cardsPerPlayer
         );
-
-        res.status(200).json({
-            message: "Cards dealt successfully.",
-            players: resultado
-        });
-
-    } catch (error) {
-        next(error);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
-}
 
+    /**
+     * Remove uma carta pelo ID correspondente.
+     *
+     * @async
+     * @method delete
+     * @param {number} req.params.id - ID da carta a ser removida
+     *
+     * @returns {Promise<void>} Status 200 com a confirmação da remoção, ou repassa o erro via `next`
+     */
     async delete(req, res, next) {
-        try {
-            const deleted = await cardService.delete(req.params.id);
-
-            if (!deleted) {
-                return res.status(404).json({ error: "Card not found" });
-            }
-
-            return res.status(204).send();
-        } catch (error) {
-            next(error);
-        }
+        const result = await cardService.delete(req.params.id);
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
     }
 }
 
