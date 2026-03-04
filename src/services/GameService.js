@@ -256,45 +256,51 @@ class GameService {
     }
 
     async abandonarJogo(gameId, playerId) {
-        const game = await GameRepository.findById(gameId);
-        if (!game) return { error: 'Jogo não encontrado' };
+        try{
+            const game = await GameRepository.findById(gameId);
+            if (!game) return Result.fail('Jogo não encontrado', 404);
 
-        const jogador = await GamePlayerRepository.findOne(gameId, playerId);
-        if (!jogador) return { error: 'Jogador não está na partida' };
+            const jogador = await GamePlayerRepository.findOne(gameId, playerId);
+            if (!jogador) return Result.fail('Jogador não está na partida', 404);
 
-        const jogadores = await GamePlayerRepository.findByGameId(gameId);
-        // Remove jogador
-        await GamePlayerRepository.delete(jogador);
+            const jogadores = await GamePlayerRepository.findByGameId(gameId);
+            // Remove jogador
+            await GamePlayerRepository.delete(jogador);
 
-        this.addHistory(gameId, `Player ${playerId}`, "abandoned the game");
+            this.addHistory(gameId, `Player ${playerId}`, "abandoned the game");
 
-        const restantes = jogadores.filter(j => j.playerId !== playerId);
-        // Se sobrar apenas 1 → W.O.
-        if (restantes.length <= 1 && game.status === 'in_progress') {
-        await GameRepository.update(game, { status: 'finished' });
+            const restantes = jogadores.filter(j => j.playerId !== playerId);
+            // Se sobrar apenas 1 → W.O.
+            if (restantes.length <= 1 && game.status === 'in_progress') {
+                await GameRepository.update(gameId, { status: 'finished' });
+                
+                this.addHistory(gameId,`System`, "the game end for w.o");
+
+                return Result.of({
+                    message: 'Partida encerrada por W.O.'
+                });                
+            }
         
-        this.addHistory(gameId,`System`, "the game end for w.o");
+                // Se era o criador → transfere
+            
+                if (game.creatorId === playerId) {
+                    await GameRepository.update(game, {
+                    creatorId: restantes[0].playerId
+                    });
+                }
 
-        return {
-            message: 'Partida encerrada por W.O.'
-        };
-      }
-    
-    // Se era o criador → transfere
-     
-        if (game.creatorId === playerId) {
-            await GameRepository.update(game, {
-            creatorId: restantes[0].playerId
-        });
-      }
+            // Ajusta turno se necessário
+            
+                if (jogador.position === game.currentPlayerPosition) {
+                    await this.proximoTurno(gameId);
+                }
 
-    // Ajusta turno se necessário
-    
-        if (jogador.position === game.currentPlayerPosition) {
-        await this.proximoTurno(gameId);
-     }
+            return Result.of({ message: 'Jogador abandonou a partida', player: playerId});
 
-      return { message: 'Jogador abandonou a partida' };
+        } catch(error){
+            return Result.fail(error)
+        }
+        
     }
 
     async jogadorDaVez(gameId) {
@@ -404,7 +410,7 @@ class GameService {
         try{
             const game = await GameRepository.findById(id);
             if (!game) Result.fail(new Error("Jogo não encontrado!"), 401);
-            await GameRepository.delete(game);
+            await GameRepository.delete(id);
             return Result.of({mensage: "Jogo removido com sucesso!"})
         }catch(error){
             return Result.fail(error)
@@ -493,6 +499,10 @@ class GameService {
 
     async comprarSeNaoPuderJogar(gameId, playerId){
         try{
+            const game = await GameRepository.findById(gameId);
+            if(!game) return Result.fail("O jogo não foi encontrado", 404)
+
+            if(game.status !='in_progress') return Result.fail("O jogo não está em andamento, você não pode comprar uma carta", 400)
             const topoResultado = await this.topoDescarte(gameId);
             
             const topo = topoResultado.value;

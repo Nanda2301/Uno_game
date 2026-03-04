@@ -21,6 +21,7 @@ router.post("/:id/start",authMiddlewares, gameController.iniciarJogo);          
 router.post("/:id/finish",authMiddlewares, gameController.finalizarJogo);       // Finalizar jogo (apenas criador)
 router.post("/:id/play", authMiddlewares, gameController.jogarUmaCarta);
 router.post("/:id/comprar", authMiddlewares, gameController.comprarSeNaoPuderJogar);
+router.post("/:id/leave_game", authMiddlewares, gameController.abandonarjogo);
 router.get('/:id/history',authMiddlewares, gameController.getHistory);
 router.get('/:id/ranking', gameController.obterRanking);
 
