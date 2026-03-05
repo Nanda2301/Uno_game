@@ -10,7 +10,6 @@ const cacheConfig = {
 
 const cacheMiddleware = createMemoizationMiddleware(cacheConfig);
 
-router.post("/", scoreController.create);
 router.get("/", scoreController.findAll);
 router.get("/:id", scoreController.getById);
 router.delete("/:id", scoreController.delete);

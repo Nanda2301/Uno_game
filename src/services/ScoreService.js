@@ -65,7 +65,7 @@ class ScoreService {
         try{
             // Validação simples
             if (!data.playerId || !data.gameId || data.score === undefined) {
-                throw new Error('Dados incompletos para criar score');
+                return Result.fail("Dados incompletos para criar o score")
             }
 
             const scoreNewPlayer = await ScoreRepository.create(data);
