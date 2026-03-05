@@ -122,6 +122,23 @@ class GameController {
         return next(result)
     }
 
+    async comprarCarta(req, res, next) {
+        try {
+            const gameId = req.params.id;
+            const playerId = req.userId; // Obtido via middleware de autenticação
+
+            const resultado = await gameService.comprarSeNaoPuderJogar(gameId, playerId);
+
+            if (resultado.error) {
+                return res.status(400).json(resultado);
+            }
+            
+            return res.status(200).json(resultado);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async obterRanking(req, res, next) {
         const gameId = req.params.id;
         const result = await gameService.obterRankingPartida(gameId);

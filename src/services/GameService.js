@@ -358,6 +358,35 @@ class GameService {
         };
     }
 
+    async aplicarInverter(gameId) {
+        const game = await GameRepository.findById(gameId);
+    
+        // Inverte a direção: 1 vira -1, e -1 vira 1
+        const novaDirecao = game.direction * -1;
+    
+        await GameRepository.update(game, {
+            direction: novaDirecao
+        });
+        
+        this.addHistory(gameId, "System", `Direção de jogo invertida para: ${novaDirecao === 1 ? 'Horário' : 'Anti-horário'}`);
+    
+        // No UNO, se houver apenas 2 jogadores, o Reverse funciona como um Skip
+        const jogadores = await GamePlayerRepository.findByGameId(gameId);
+        if (jogadores.length === 2) {
+            await this.proximoTurno(gameId);
+        }
+    }
+
+    async aplicarPular(gameId) {
+        // Primeiro avanço: passa o turno do jogador que jogou o Skip
+        await this.proximoTurno(gameId);
+    
+        // Segundo avanço: pula o próximo jogador
+        const jogadorPuladoPosicao = await this.proximoTurno(gameId);
+    
+        this.addHistory(gameId, "System", `Jogador na posição ${jogadorPuladoPosicao} foi pulado`);
+    }
+
 
     async topoDescarte(gameId) {
       const game = await GameRepository.findById(gameId);
