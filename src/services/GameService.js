@@ -461,6 +461,8 @@ class GameService {
         const gameResult = await this.findById(gameId)
         if(!gameResult.ok) return gameResult
 
+        if(gameResult.status != 'in_progress') return Result.fail("O jogo não está em andamento, você não pode jogar ainda", 400)
+
         const jogadorDaVez = await this.jogadorDaVez(gameId)
         const naoEhJogadorDaVez = jogadorDaVez.playerId !== playerId
         if(naoEhJogadorDaVez) return Result.fail("Não tente trapacear, você não é o jogador da vez", 400)
