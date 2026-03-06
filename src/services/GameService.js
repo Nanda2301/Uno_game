@@ -3,6 +3,7 @@ const GamePlayerRepository = require("../repositories/GamePlayerRepository");
 const UserRepository = require("../repositories/UserRepository")
 const CardService = require('./CardService');
 const Result = require("../config/result")
+const ScoreService = require("./ScoreService")
 
 /**
  * Verifica se o usuário é o criador do jogo
@@ -93,6 +94,15 @@ class GameService {
                 position: 1
             });
 
+            const data = {
+                playerId: creatorId, 
+                gameId: game.id,
+                score: 0
+            }
+
+            const resultScore = await ScoreService.create(data)
+            if(!resultScore.ok) return 
+
             // Gera o baralho de 108 cartas
             await CardService.createDeck(game.id);
             return Result.ok(game, 201)
@@ -146,6 +156,15 @@ class GameService {
                 ready: false,
                 position: jogadoresAtuais.length + 1
             });
+
+            const data = {
+                playerId: playerId, 
+                gameId: gameId,
+                score: 0
+            }
+
+            const resultScore = await ScoreService.create(data)
+            if(!resultScore.ok) return 
 
             return Result.ok(novoJogador, 201)
 
@@ -515,24 +534,17 @@ class GameService {
             const podeJogar = CardService.validarJogada(topo);
 
             const cartaJogavel = mao.find(c => podeJogar(c));
-            console.log("cheguei aqui 1")
 
             if (cartaJogavel){
-                console.log("cheguei aqui 2")
-                return Result.of({message: "Jogador possui carta jogável", podeJogar: true})
-                
+                return Result.of({message: "Jogador possui carta jogável", podeJogar: true})  
             }
 
             const novaCarta = await CardService.drawToPlayer(gameId, playerId);
-            console.log("cheguei aqui 6")
 
             if(podeJogar(novaCarta)){
-                console.log("cheguei aqui 3")
                 return Result.of({message: "Jogador possui carta jogável", carta: novaCarta})
             }
-            console.log("cheguei aqui 4")
             await this.proximoTurno(gameId);
-            console.log("cheguei aqui 5")
 
             return Result.of({message:"Carta comprada não é jogável. Turno passado.", carta: novaCarta })
         } catch(error){
