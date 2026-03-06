@@ -122,7 +122,8 @@ class GameService {
 
     async findById(id) {
         try{
-            const game = await GameRepository.findById(id);
+            const game = await GameRepository.findById(id, false);
+            console.log(game)
             if(!game) return Result.fail("Game not found", 404);
             return Result.of(game)
         }catch(error){
