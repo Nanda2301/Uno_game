@@ -570,8 +570,12 @@ class GameService {
     }
 
     async dizerUno(gameId, playerId) {
-        const mao = await CardService.seePlayerCards(gameId, playerId);
-        if (mao.value.length !== 1) {
+        const maoResult = await CardService.seePlayerCards(gameId, playerId);
+        // Retorna erro caso ocorra um problema na procura por cartas
+        if(!maoResult.ok) return maoResult 
+        
+        const mao = maoResult.value
+        if (mao.length !== 1) {
             return Result.fail("Você só pode dizer UNO quando tiver exatamente 1 carta!", 400);
         }
         
