@@ -487,6 +487,7 @@ class GameService {
         if (playedCard.value === "skip"){
             const realNextPlayer = await this.proximoTurno(gameId);
             return Result.of({
+                "played card": playedCard,
                 "nextPlayerPosition": realNextPlayer.novaPosicao,
                 "nextPlayer": realNextPlayer.player,
                 "skippedPlayer": nextPlayer.player
@@ -499,6 +500,7 @@ class GameService {
         }
 
         return Result.of({
+            "played card": playedCard,
             "nextPlayerPosition": nextPlayer.novaPosicao,
             "nextPlayer": nextPlayer.player
         })
