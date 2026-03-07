@@ -25,4 +25,7 @@ router.post("/:id/leave_game", authMiddlewares, gameController.abandonarjogo);
 router.get('/:id/history',authMiddlewares, gameController.getHistory);
 router.get('/:id/ranking', gameController.obterRanking);
 
+// Rotas para dizer UNO
+router.post("/:gameId/say-uno", authMiddlewares, gameController.dizerUno)
+
 module.exports = router;
