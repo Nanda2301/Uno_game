@@ -18,16 +18,6 @@ const logger = require('../config/logger');
  *
  * @returns {void} Retorna uma resposta HTTP com o status e a mensagem de erro
  *
- * @example
- * // Registrar na aplicação após todas as rotas
- * app.use(routes)
- * app.use(errorMiddleware)
- *
- * @example
- * // Resposta de erro retornada ao cliente:
- * // Status: 404
- * // { "error": "User not found" }
- *
  * @see Result
  * @see logger
  */

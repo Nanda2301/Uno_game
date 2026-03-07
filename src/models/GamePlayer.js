@@ -39,6 +39,17 @@ const GamePlayer = sequelize.define("GamePlayer", {
         allowNull: false,
         defaultValue: 0
     }
-});
+}, {
+    indexes: [
+        {
+            unique: true,
+            fields: ["game_id", "player_id"]
+        }, {
+            unique: true,
+            fields: ["game_id", "position"]
+        }
+    ]
+}   
+);
 
 module.exports = GamePlayer;
