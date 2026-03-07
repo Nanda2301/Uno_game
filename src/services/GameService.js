@@ -76,7 +76,7 @@ class GameService {
     async create(gameData, creatorId) {
         // << PODEMOS ADINCIONAR UMA TRANSACTION NESSE METODO  >>
         try{
-            const player = UserRepository.findById(creatorId)
+            const player = await UserRepository.findById(creatorId)
             if(!player) return Result.fail(new Error("Jogador não existe!"), 404);
 
             // Cria o jogo no banco
