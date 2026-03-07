@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-require("./models/Assossietions.js");
+require("./models/Assossiations.js");
 
 const routes = require("./routes/routes");
 const errorMiddleware = require("./middlewares/errorMiddleware.js");

@@ -435,7 +435,7 @@ class GameService {
     async delete(id) {
         try{
             const game = await GameRepository.findById(id);
-            if (!game) Result.fail(new Error("Jogo não encontrado!"), 401);
+            if (!game) return Result.fail(new Error("Jogo não encontrado!"), 401);
             await GameRepository.delete(id);
             return Result.of({mensage: "Jogo removido com sucesso!"})
         }catch(error){
