@@ -3,6 +3,7 @@ const GamePlayerRepository = require("../repositories/GamePlayerRepository");
 const UserRepository = require("../repositories/UserRepository")
 const CardService = require('./CardService');
 const Result = require("../config/result")
+const ScoreService = require("./ScoreService")
 
 /**
  * Verifica se o usuário é o criador do jogo
@@ -75,7 +76,7 @@ class GameService {
     async create(gameData, creatorId) {
         // << PODEMOS ADINCIONAR UMA TRANSACTION NESSE METODO  >>
         try{
-            const player = UserRepository.findById(creatorId)
+            const player = await UserRepository.findById(creatorId)
             if(!player) return Result.fail(new Error("Jogador não existe!"), 404);
 
             // Cria o jogo no banco
@@ -92,6 +93,15 @@ class GameService {
                 ready: true, // Criador já entra pronto
                 position: 1
             });
+
+            const data = {
+                playerId: creatorId, 
+                gameId: game.id,
+                score: 0
+            }
+
+            const resultScore = await ScoreService.create(data)
+            if(!resultScore.ok) return 
 
             // Gera o baralho de 108 cartas
             await CardService.createDeck(game.id);
@@ -112,7 +122,7 @@ class GameService {
 
     async findById(id) {
         try{
-            const game = await GameRepository.findById(id);
+            const game = await GameRepository.findById(id, false);
             if(!game) return Result.fail("Game not found", 404);
             return Result.of(game)
         }catch(error){
@@ -146,6 +156,15 @@ class GameService {
                 ready: false,
                 position: jogadoresAtuais.length + 1
             });
+
+            const data = {
+                playerId: playerId, 
+                gameId: gameId,
+                score: 0
+            }
+
+            const resultScore = await ScoreService.create(data)
+            if(!resultScore.ok) return 
 
             return Result.ok(novoJogador, 201)
 
@@ -314,6 +333,13 @@ class GameService {
        return jogador;
     }
 
+    calculateCardScore(card) {
+        if (!isNaN(card.value)) return parseInt(card.value); // 0-9
+        if (["skip", "reverse", "draw2"].includes(card.value)) return 20;
+        if (["wild", "draw4"].includes(card.value)) return 50;
+        return 0;
+    }
+
     // Método para verificar fim de jogo e calcular pontos
     async checkGameOver(gameId) {
         const players = await GamePlayerRepository.findByGameId(gameId);
@@ -441,9 +467,17 @@ class GameService {
         const gameResult = await this.findById(gameId)
         if(!gameResult.ok) return gameResult
 
+        if(gameResult.value.status != 'in_progress') return Result.fail("O jogo não está em andamento, você não pode jogar ainda", 400)
+
         const jogadorDaVez = await this.jogadorDaVez(gameId)
         const naoEhJogadorDaVez = jogadorDaVez.playerId !== playerId
         if(naoEhJogadorDaVez) return Result.fail("Não tente trapacear, você não é o jogador da vez", 400)
+
+        const top = await this.topoDescarte(gameId)
+        const cardPlay = await CardService.findById(cardId)
+        
+        const validatePlay = CardService.validarJogada(top.value)
+        if(!validatePlay(cardPlay.value)) return Result.fail("A carta jogada não é valida, jogue outra carta", 400)
 
         // Joga a carta na mesa. Se tiver problema, retorna um Result sem ok válido
         const resultPlayCard = await CardService.jogarUmaCarta(gameResult.value, playerId, cardId)
@@ -460,6 +494,7 @@ class GameService {
         if (playedCard.value === "skip"){
             const realNextPlayer = await this.proximoTurno(gameId);
             return Result.of({
+                "played card": playedCard,
                 "nextPlayerPosition": realNextPlayer.novaPosicao,
                 "nextPlayer": realNextPlayer.player,
                 "skippedPlayer": nextPlayer.player
@@ -472,6 +507,7 @@ class GameService {
         }
 
         return Result.of({
+            "played card": playedCard,
             "nextPlayerPosition": nextPlayer.novaPosicao,
             "nextPlayer": nextPlayer.player
         })
@@ -515,29 +551,50 @@ class GameService {
             const podeJogar = CardService.validarJogada(topo);
 
             const cartaJogavel = mao.find(c => podeJogar(c));
-            console.log("cheguei aqui 1")
 
             if (cartaJogavel){
-                console.log("cheguei aqui 2")
-                return Result.of({message: "Jogador possui carta jogável", podeJogar: true})
-                
+                return Result.of({message: "Jogador possui carta jogável", podeJogar: true})  
             }
 
             const novaCarta = await CardService.drawToPlayer(gameId, playerId);
-            console.log("cheguei aqui 6")
 
             if(podeJogar(novaCarta)){
-                console.log("cheguei aqui 3")
                 return Result.of({message: "Jogador possui carta jogável", carta: novaCarta})
             }
-            console.log("cheguei aqui 4")
             await this.proximoTurno(gameId);
-            console.log("cheguei aqui 5")
 
             return Result.of({message:"Carta comprada não é jogável. Turno passado.", carta: novaCarta })
         } catch(error){
             return Result.fail(error)
         }
+    }
+
+    async dizerUno(gameId, playerId) {
+        const mao = await CardService.seePlayerCards(gameId, playerId);
+        if (mao.value.length !== 1) {
+            return Result.fail("Você só pode dizer UNO quando tiver exatamente 1 carta!", 400);
+        }
+        
+        if (!this.unoStatus[gameId]) this.unoStatus[gameId] = {};
+        this.unoStatus[gameId][playerId] = true;
+    
+        this.addHistory(gameId, `Player ${playerId}`, "Disse UNO!");
+        return Result.ok({ message: "UNO registrado!" });
+    }
+    
+    async desafiarUno(gameId, denuncianteId, denunciadoId) {
+        const maoDenunciado = await CardService.seePlayerCards(gameId, denunciadoId);
+        const disseUno = this.unoStatus[gameId] && this.unoStatus[gameId][denunciadoId];
+
+        // Se ele tem 1 carta e NÃO disse UNO
+        if (maoDenunciado.value.length === 1 && !disseUno) {
+            // Punição: compra 2 cartas
+            await CardService.drawToPlayer(gameId, denunciadoId);
+            await CardService.drawToPlayer(gameId, denunciadoId);
+            this.addHistory(gameId, "System", `Jogador ${denunciadoId} foi penalizado por não dizer UNO.`);
+            return Result.ok({ message: "Desafio aceito! O jogador comprou 2 cartas." });
+        }
+        return Result.fail("O jogador está seguro ou não tem apenas uma carta.", 400);
     }
 }
 

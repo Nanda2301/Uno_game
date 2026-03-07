@@ -123,20 +123,10 @@ class GameController {
     }
 
     async comprarCarta(req, res, next) {
-        try {
             const gameId = req.params.id;
             const playerId = req.userId; // Obtido via middleware de autenticação
-
             const resultado = await gameService.comprarSeNaoPuderJogar(gameId, playerId);
-
-            if (resultado.error) {
-                return res.status(400).json(resultado);
-            }
-            
-            return res.status(200).json(resultado);
-        } catch (error) {
-            next(error);
-        }
+            if (resultado.ok) return res.status(resultado.status).json(resultado);
     }
 
     async obterRanking(req, res, next) {
@@ -160,6 +150,17 @@ class GameController {
         const result = await GameService.abandonarJogo(gameId, playerId);
         if (result.ok) return res.status(result.status).json(result.value);
         next(result)
+    }
+
+    async getEstadoAtual(req, res, next) {
+        const gameId = req.params.id;
+        const jogador = await gameService.jogadorDaVez(gameId);
+        const topo = await gameService.topoDescarte(gameId);
+    
+        return res.status(200).json({
+            jogadorAtual: jogador,
+            cartaNoTopo: topo
+        });
     }
 }
 

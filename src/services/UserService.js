@@ -30,7 +30,7 @@ async function create(data) {
         if (emailExist) return Result.fail(new Error("Email já cadastrado"), 406);
 
         const user = await UserRepository.create(data);
-        return Result.of(user)
+        return Result.ok(user, 201)
     }catch(error){
         return Result.fail(error)
     }
