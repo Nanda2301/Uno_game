@@ -123,7 +123,6 @@ class GameService {
     async findById(id) {
         try{
             const game = await GameRepository.findById(id, false);
-            console.log(game)
             if(!game) return Result.fail("Game not found", 404);
             return Result.of(game)
         }catch(error){
@@ -461,9 +460,17 @@ class GameService {
         const gameResult = await this.findById(gameId)
         if(!gameResult.ok) return gameResult
 
+        if(gameResult.value.status != 'in_progress') return Result.fail("O jogo não está em andamento, você não pode jogar ainda", 400)
+
         const jogadorDaVez = await this.jogadorDaVez(gameId)
         const naoEhJogadorDaVez = jogadorDaVez.playerId !== playerId
         if(naoEhJogadorDaVez) return Result.fail("Não tente trapacear, você não é o jogador da vez", 400)
+
+        const top = await this.topoDescarte(gameId)
+        const cardPlay = await CardService.findById(cardId)
+        
+        const validatePlay = CardService.validarJogada(top.value)
+        if(!validatePlay(cardPlay.value)) return Result.fail("A carta jogada não é valida, jogue outra carta", 400)
 
         // Joga a carta na mesa. Se tiver problema, retorna um Result sem ok válido
         const resultPlayCard = await CardService.jogarUmaCarta(gameResult.value, playerId, cardId)

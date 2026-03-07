@@ -8,8 +8,9 @@ const { raw } = require("express");
 
 const podeJogar = (cartaNoTopo) => (cartaJogada) => {
     if (cartaJogada.color === 'black') return true;
-        return cartaNoTopo.color === cartaJogada.color || 
-           cartaNoTopo.value === cartaJogada.value;
+    if( cartaNoTopo.color === cartaJogada.color || 
+           cartaNoTopo.value === cartaJogada.value) return true;
+    return false
 };
 
 const embaralhar = (deck) => {
