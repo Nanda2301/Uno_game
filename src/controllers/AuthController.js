@@ -37,7 +37,9 @@ class AuthController {
     try {
       const token = req.headers.authorization.split(" ")[1];
       const result = await AuthService.logout(token);
-      return res.status(200).json(result);
+      if (result.ok) return res.status(result.status).json(result.value);
+      return next(result);
+
     } catch (error) {
       next(Result.fail(error));
     }

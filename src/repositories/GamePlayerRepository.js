@@ -7,7 +7,8 @@ class GamePlayerRepository {
 
     async findByGameId(gameId) {
         return await GamePlayer.findAll({
-            where: { gameId }
+            where: { gameId },
+            order: [["position", "ASC"]]
         });
     }
 
@@ -41,19 +42,13 @@ class GamePlayerRepository {
     }
 
     async findScoresByGameId(gameId) {
-    return await GamePlayer.findAll({
-        where: { gameId },
-        attributes: ['playerId', 'score', 'position'],
-        order: [['score', 'DESC']],
-        raw: true
-    });
-}
-
-    async delete(gamePlayer) { return await gamePlayer.destroy(); }
-
-    
-
-
+        return await GamePlayer.findAll({
+            where: { gameId },
+            attributes: ['playerId', 'score', 'position'],
+            order: [['score', 'DESC']],
+            raw: true
+        });
+    }
 }
 
 module.exports = new GamePlayerRepository();

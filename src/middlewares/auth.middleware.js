@@ -32,30 +32,24 @@ const TokenBlacklist = require("../models/TokenBlacklist.js");
  * @see TokenBlacklist - Modelo utilizado para verificar tokens revogados
  */
 module.exports = async(req, res, next) => {
-    const authHeader = req.headers.authorization;
-
-    if(!authHeader){
-        return res.status(401).json({message: "Token not provided"});
-    }
-
-    const authData = authHeader.split(" ");
-    const [scheme , token] = authData;
-    if (authData.length !== 2) {
-        return res.status(400).json({ error: "Invalid token"});
-    } 
-    if (!/^Bearer$/i.test(scheme)) {
-        return res.status(400).json({ error: "Token incorrectly formatted!" });
-    }
-
-    const isBlacklisted = await TokenBlacklist.findOne({where: {token}});
-    if(isBlacklisted){
-        return res.status(401).json({message: "Token invalid (logged out"});
-    }
-
     try{
+        const authHeader = req.headers.authorization;
+
+        if(!authHeader) return res.status(401).json({message: "Token not provided"});
+
+        const [scheme , token] = authHeader.split(" ");
+        if (!scheme || !token) return res.status(400).json({ error: "Invalid token"});
+        if (!/^Bearer$/i.test(scheme)) return res.status(400).json({ error: "Token incorrectly formatted!" });
+
+        const isBlacklisted = await TokenBlacklist.findOne({where: {token}});
+        if(isBlacklisted){
+            return res.status(401).json({message: "Token invalid (logged out"});
+        }
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
         req.userId = decoded.id;
-        next();
+        
+        return next();
     } catch (err){
         return res.status(401).json({message: "Invalid token"});
     }

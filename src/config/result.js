@@ -74,8 +74,9 @@ class Result {
    * console.log(result.error) // Error: "Não encontrado"
    */
   static fail(error, status = 400) {
-    if(error.constructor.name === "Error") return new Result(false, null, error, status);
-    return new Result(false, null, new Error(`${error}`), status);
+    const erroNormalizado = error instanceof Error ?
+      error : new Error(String(error ?? "Erro não informado"))
+    return new Result(false, null, erroNormalizado, status);
   }
 
   /**
