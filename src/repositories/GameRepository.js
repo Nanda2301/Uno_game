@@ -11,7 +11,10 @@ class GameRepository {
     }
 
     async findById(id, raw=true) {
-        return await Game.findByPk(id, {
+        if(raw){
+        return Game.findByPk(id, {raw: true});
+        }
+        return Game.findByPk(id, {
             include: [
                 {
                     model: GamePlayer,
@@ -19,27 +22,29 @@ class GameRepository {
                     attributes: [
                         "playerId",
                         "ready",
-                        "position"
+                        "position",
+                        "score"
                     ]
                 }
                 
             ],
-            raw
         });
     }
 
     async update(id, data, options={}) {
-        const game = await this.findById(id, false)
-        if(!game) return null;
+        const game = await Game.findByPk(id);
+            if (!game) return null;
 
-        if(data.title) game.title = data.title;
-        if(data.status) game.status = data.status;
-        if(data.maxPlayers) game.maxPlayers = data.maxPlayers;
-        if(data.topDiscardCardId) game.topDiscardCardId = data.topDiscardCardId;
-        if(data.currentPlayerPosition) game.currentPlayerPosition = data.currentPlayerPosition;
-        await game.save(options)
+            if ("title" in data) game.title = data.title;
+            if ("status" in data) game.status = data.status;
+            if ("maxPlayers" in data) game.maxPlayers = data.maxPlayers;
+            if ("topDiscardCardId" in data) game.topDiscardCardId = data.topDiscardCardId;
+            if ("currentPlayerPosition" in data) game.currentPlayerPosition = data.currentPlayerPosition;
+            if ("direction" in data) game.direction = data.direction;
+            if ("creatorId" in data) game.creatorId = data.creatorId;
 
-        return game.dataValues
+            await game.save(options);
+            return game.get({ plain: true });
     }
 
     async delete(id) {
