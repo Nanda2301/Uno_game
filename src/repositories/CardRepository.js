@@ -47,17 +47,18 @@ class CardRepository {
      * @returns {Promise<Card|null>} Retorna a instância atualizada da carta,
      * ou `null` se nenhuma carta for encontrada com o ID fornecido
      */
-    async update(id, data, options={}) {
-        const card = await this.findById(id, false)
-        if(!card) return null
-        if(data.color) card.color = data.color;
-        if(data.value) card.value = data.value;
-        if(data.gameId) card.gameId = data.gameId;
-        if(data.playerId) card.playerId = data.playerId;
-        if(data.pile) card.pile = data.pile;
-        await card.save(options)
-        return card.dataValues
+    async update(id, data, options = {}) {
+        const card = await Card.findByPk(id);
+        if (!card) return null;
 
+        if ("color" in data) card.color = data.color;
+        if ("value" in data) card.value = data.value;
+        if ("gameId" in data) card.gameId = data.gameId;
+        if ("playerId" in data) card.playerId = data.playerId;
+        if ("pile" in data) card.pile = data.pile;
+
+        await card.save(options);
+        return card.get({ plain: true });
     }
 
     async createMany(cardsData) {
@@ -65,8 +66,20 @@ class CardRepository {
         return await Card.bulkCreate(cardsData);
     }
 
-    async delete(card) {
-        return await card.destroy();
+    async delete(cardOrId) {
+        let card = null;
+
+        if (cardOrId && typeof cardOrId.destroy === "function") {
+        card = cardOrId;
+        } else {
+        const id = typeof cardOrId === "object" ? cardOrId?.id : cardOrId;
+        card = await Card.findByPk(id);
+        }
+
+        if (!card) return null;
+
+        await card.destroy();
+        return true;
     }
 
     async findOne(options){
