@@ -141,7 +141,7 @@ class CardService {
 
     async delete(id) {
         try{
-            const card = await CardRepository.findById(id);
+            const card = await CardRepository.findById(id, false);
             if (!card) return Result.fail(new Error("Card not found to remove"), 404);
             await CardRepository.delete(card);
             return Result.of({Mensage: "Removido com sucesso"})
