@@ -333,6 +333,13 @@ class GameService {
        return jogador;
     }
 
+    calculateCardScore(card) {
+        if (!isNaN(card.value)) return parseInt(card.value); // 0-9
+        if (["skip", "reverse", "draw2"].includes(card.value)) return 20;
+        if (["wild", "draw4"].includes(card.value)) return 50;
+        return 0;
+    }
+
     // Método para verificar fim de jogo e calcular pontos
     async checkGameOver(gameId) {
         const players = await GamePlayerRepository.findByGameId(gameId);
@@ -560,6 +567,34 @@ class GameService {
         } catch(error){
             return Result.fail(error)
         }
+    }
+
+    async dizerUno(gameId, playerId) {
+        const mao = await CardService.seePlayerCards(gameId, playerId);
+        if (mao.value.length !== 1) {
+            return Result.fail("Você só pode dizer UNO quando tiver exatamente 1 carta!", 400);
+        }
+        
+        if (!this.unoStatus[gameId]) this.unoStatus[gameId] = {};
+        this.unoStatus[gameId][playerId] = true;
+    
+        this.addHistory(gameId, `Player ${playerId}`, "Disse UNO!");
+        return Result.ok({ message: "UNO registrado!" });
+    }
+    
+    async desafiarUno(gameId, denuncianteId, denunciadoId) {
+        const maoDenunciado = await CardService.seePlayerCards(gameId, denunciadoId);
+        const disseUno = this.unoStatus[gameId] && this.unoStatus[gameId][denunciadoId];
+
+        // Se ele tem 1 carta e NÃO disse UNO
+        if (maoDenunciado.value.length === 1 && !disseUno) {
+            // Punição: compra 2 cartas
+            await CardService.drawToPlayer(gameId, denunciadoId);
+            await CardService.drawToPlayer(gameId, denunciadoId);
+            this.addHistory(gameId, "System", `Jogador ${denunciadoId} foi penalizado por não dizer UNO.`);
+            return Result.ok({ message: "Desafio aceito! O jogador comprou 2 cartas." });
+        }
+        return Result.fail("O jogador está seguro ou não tem apenas uma carta.", 400);
     }
 }
 
