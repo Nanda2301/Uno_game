@@ -151,6 +151,17 @@ class GameController {
         if (result.ok) return res.status(result.status).json(result.value);
         next(result)
     }
+
+    async getEstadoAtual(req, res, next) {
+        const gameId = req.params.id;
+        const jogador = await gameService.jogadorDaVez(gameId);
+        const topo = await gameService.topoDescarte(gameId);
+    
+        return res.status(200).json({
+            jogadorAtual: jogador,
+            cartaNoTopo: topo
+        });
+    }
 }
 
 module.exports = new GameController();
