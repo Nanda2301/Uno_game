@@ -166,7 +166,7 @@ class GameService {
             const resultScore = await ScoreService.create(data)
             if(!resultScore.ok) return 
 
-            return Result.ok(novoJogador, 201)
+            return Result.ok(novoJogador, 200) // Não faz sentido ser 201
 
         }catch(error){
             return Result.fail(error)
