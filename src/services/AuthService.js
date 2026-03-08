@@ -37,7 +37,7 @@ class AuthService {
       await TokenBlacklist.create({token})
       return Result.of({ message: "Logout realizado com sucesso" });
     }catch(err){
-      return Result.fail(error, 500);
+      return Result.fail(err, 500);
     }
   }
 }
