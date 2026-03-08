@@ -10,36 +10,34 @@ class GameRepository {
         return await Game.findAll({raw:true});
     }
 
-    async findById(id, raw=true) {
+    async findById(id, raw=false) {
+        if(raw) return Game.findByPk(id, {raw})
+
         return await Game.findByPk(id, {
             include: [
                 {
                     model: GamePlayer,
                     as: "players",
-                    attributes: [
-                        "playerId",
-                        "ready",
-                        "position"
-                    ]
+                    attributes: ["id", "playerId", "ready", "position", "score"]
                 }
-                
             ],
-            raw
         });
     }
 
-    async update(id, data, options={}) {
-        const game = await this.findById(id, false)
-        if(!game) return null;
+    async update(id, data, options = {}) {
+        const game = await Game.findByPk(id);
+        if (!game) return null;
 
-        if(data.title) game.title = data.title;
-        if(data.status) game.status = data.status;
-        if(data.maxPlayers) game.maxPlayers = data.maxPlayers;
-        if(data.topDiscardCardId) game.topDiscardCardId = data.topDiscardCardId;
-        if(data.currentPlayerPosition) game.currentPlayerPosition = data.currentPlayerPosition;
-        await game.save(options)
+        if ("title" in data) game.title = data.title;
+        if ("status" in data) game.status = data.status;
+        if ("maxPlayers" in data) game.maxPlayers = data.maxPlayers;
+        if ("topDiscardCardId" in data) game.topDiscardCardId = data.topDiscardCardId;
+        if ("currentPlayerPosition" in data) game.currentPlayerPosition = data.currentPlayerPosition;
+        if ("direction" in data) game.direction = data.direction;
+        if ("creatorId" in data) game.creatorId = data.creatorId;
 
-        return game.dataValues
+        await game.save(options);
+        return game.get({ plain: true });
     }
 
     async delete(id) {
@@ -52,9 +50,8 @@ class GameRepository {
     }
 
     async gameExists(id){
-        const game = await this.findById(id)
-        if(!game) return false;
-        return true
+        const count = await Game.count({where: {id}})
+        return count > 0;
     }
 }
 

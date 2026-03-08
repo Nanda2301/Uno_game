@@ -91,12 +91,17 @@ class CardService {
         if (!data.color) return Result.fail(new Error("Cor da carta não informada!"), 400);
         if (!data.value) return Result.fail(new Error("Valor da carta não informado!"), 400);
         if (!data.gameId) return Result.fail(new Error("Id do jogo não informado!"), 400);
-        if (!data.pile) return Result.fail(new Error("Pilha não informada!"), 400);
-        try{
-            const newCard = await CardRepository.create(data);
-            return Result.ok(newCard, 201)
-        }catch(error){
-            return Result.fail(error)
+
+        try {
+            const payload = {
+            ...data,
+            pile: data.pile || "draw"
+            };
+
+            const newCard = await CardRepository.create(payload);
+            return Result.ok(newCard, 201);
+        } catch (error) {
+            return Result.fail(error, 500);
         }
     }
 
@@ -111,9 +116,9 @@ class CardService {
 
     async findById(id) {
         try {
-            if (!id) return Result.fail(new Error("Id de carta não inserido!"), 400);
+            if (!id) return Result.fail("Id de carta não inserido!", 400);
 
-            const card = await CardRepository.findById(id);
+            const card = await CardRepository.findById(id, false);
             if(!card) return Result.fail("Carta não encontrada!", 404);
 
             // Uso de Functor para transformar o dado sem mutação direta
@@ -125,7 +130,7 @@ class CardService {
                 viewedAt: new Date().toISOString()
             }));
         } catch (error) {
-            return Result.fail(error)
+            return Result.fail(error, 500)
         }
     }
 
@@ -140,13 +145,17 @@ class CardService {
     }
 
     async delete(id) {
-        try{
-            const card = await CardRepository.findById(id);
-            if (!card) return Result.fail(new Error("Card not found to remove"), 404);
-            await CardRepository.delete(card);
-            return Result.of({Mensage: "Removido com sucesso"})
-        }catch(error){
-            return Result.fail(error)
+        try {
+            if (!id) return Result.fail(new Error("Id da carta não informado"), 400);
+
+            const deleted = await CardRepository.delete(id);
+            if (!deleted) {
+            return Result.fail(new Error("Card not found to remove"), 404);
+            }
+
+            return Result.of({ message: "Removido com sucesso" });
+        } catch (error) {
+            return Result.fail(error, 500);
         }
     }
 
@@ -155,18 +164,18 @@ class CardService {
             where: {
                 gameId,
                 pile: 'draw'
-            }
+            },
+            order: [["id", "ASC"]]
         });
 
         if (!card) {
             throw new Error('O baralho de compra está vazio!');
         }
 
-    await CardRepository.update(card.id, {
-        pile: 'discard'
-    });
-
-        return card;
+        return await CardRepository.update(card.id, {
+            pile: 'discard',
+            playerId: null
+        });
     }
 
     validarJogada(cartaNoTopo) {
@@ -178,21 +187,18 @@ class CardService {
             where: {
                 gameId,
                 pile: 'draw'
-            }
+            },
+            order: [["id", "ASC"]]
         });
 
         if(!card){
             throw new Error("Não a cartas no baralho");
         }
 
-        await CardRepository.update(card.id, {
+        return await CardRepository.update(card.id, {
             pile: 'hand',
-            playerId: playerId
+            playerId
         });
-
-        console.log(await CardRepository.findAll())
-
-        return card;
     }
 
     /**
@@ -257,14 +263,19 @@ class CardService {
                     pile: 'hand'
                 }
             });
+
             // A carta não pertence ao jogador ou não existe
-            if(!card) return Result.fail(new Error("Carta não pertence ao jogador"));
+            if(!card) return Result.fail("Carta não pertence ao jogador ou não está na mão", 404);
+
             // Atualiza as informações da carta
-            await CardRepository.update( cardId, { pile: 'discard', playerId: null } );
-            return Result.of(card)
+            const updateCard = await CardRepository.update( cardId, { 
+                pile: 'discard', 
+                playerId: null 
+            });
+
+            return Result.of(updateCard)
         }catch(error){
-            await transaction.rollback()
-            return Result.fail(error)
+            return Result.fail(error, 500)
         }
     }
 }

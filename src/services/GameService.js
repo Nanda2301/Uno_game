@@ -166,7 +166,7 @@ class GameService {
             const resultScore = await ScoreService.create(data)
             if(!resultScore.ok) return 
 
-            return Result.ok(novoJogador, 201)
+            return Result.ok(novoJogador, 200) // Não faz sentido ser 201
 
         }catch(error){
             return Result.fail(error)
@@ -253,73 +253,73 @@ class GameService {
      * FINALIZAR JOGO - Apenas o criador pode
      */
     async finalizarJogo(gameId, userId) {
-        try{
-            const game = await GameRepository.findById(gameId);
-            if (!game) return Result.fail(new Error('Jogo não encontrado'), 404);
-            const jogoFinalizado = game.status === 'finished'
-            if(jogoFinalizado) return Result.fail(new Error('Jogo já foi finalizado'), 400);
+      try {
+        const game = await GameRepository.findById(gameId);
+        if (!game) return Result.fail(new Error("Jogo não encontrado"), 404);
 
-            // VALIDAÇÃO FUNCIONAL - Apenas criador
-            const validarCriador = ehCriador(game);
-            const naoEhCriador = !validarCriador(userId)
-            if (naoEhCriador) return Result.fail(new Error('Apenas o criador da partida pode finalizá-la'), 400);
-
-            const gameModified = await GameRepository.update(gameId, { status: 'finished' });
-            this.addHistory(gameId,`Player ${userId}`, "end the game");
-
-            return Result.of( {message: 'Jogo finalizado com sucesso!', game: gameModified })
-
-        }catch(error){
-            return Result.fail(error)
+        if (game.status === "finished") {
+          return Result.fail(new Error("Jogo já foi finalizado"), 400);
         }
+
+        if (game.creatorId !== Number(userId)) {
+          return Result.fail(new Error("Apenas o criador da partida pode finalizá-la"), 400);
+        }
+
+        const gameModified = await GameRepository.update(gameId, { status: "finished" });
+        this.addHistory(gameId, `Player ${userId}`, "end the game");
+
+        return Result.of({
+          message: "Jogo finalizado com sucesso!",
+          game: gameModified
+        });
+      } catch (error) {
+        return Result.fail(error, 500);
+      }
     }
 
     async abandonarJogo(gameId, playerId) {
-        try{
-            const game = await GameRepository.findById(gameId);
-            if (!game) return Result.fail('Jogo não encontrado', 404);
+      try {
+        const game = await GameRepository.findById(gameId);
+        if (!game) return Result.fail(new Error("Jogo não encontrado"), 404);
 
-            const jogador = await GamePlayerRepository.findOne(gameId, playerId);
-            if (!jogador) return Result.fail('Jogador não está na partida', 404);
+        const jogador = await GamePlayerRepository.findOne(gameId, playerId);
+        if (!jogador) return Result.fail(new Error("Jogador não está na partida"), 404);
 
-            const jogadores = await GamePlayerRepository.findByGameId(gameId);
-            // Remove jogador
-            await GamePlayerRepository.delete(jogador);
+        const jogadores = await GamePlayerRepository.findByGameId(gameId);
 
-            this.addHistory(gameId, `Player ${playerId}`, "abandoned the game");
+        await GamePlayerRepository.delete(jogador);
+        this.addHistory(gameId, `Player ${playerId}`, "abandoned the game");
 
-            const restantes = jogadores.filter(j => j.playerId !== playerId);
-            // Se sobrar apenas 1 → W.O.
-            if (restantes.length <= 1 && game.status === 'in_progress') {
-                await GameRepository.update(gameId, { status: 'finished' });
-                
-                this.addHistory(gameId,`System`, "the game end for w.o");
+        const restantes = jogadores.filter((j) => Number(j.playerId) !== Number(playerId));
 
-                return Result.of({
-                    message: 'Partida encerrada por W.O.'
-                });                
-            }
-        
-                // Se era o criador → transfere
-            
-                if (game.creatorId === playerId) {
-                    await GameRepository.update(game, {
-                    creatorId: restantes[0].playerId
-                    });
-                }
+        await this.reorganizarPosicoes(gameId);
 
-            // Ajusta turno se necessário
-            
-                if (jogador.position === game.currentPlayerPosition) {
-                    await this.proximoTurno(gameId);
-                }
+        if (restantes.length <= 1 && game.status === "in_progress") {
+          await GameRepository.update(gameId, { status: "finished" });
+          this.addHistory(gameId, "System", "the game end for w.o");
 
-            return Result.of({ message: 'Jogador abandonou a partida', player: playerId});
-
-        } catch(error){
-            return Result.fail(error)
+          return Result.of({
+            message: "Partida encerrada por W.O."
+          });
         }
-        
+
+        if (game.creatorId === Number(playerId) && restantes.length > 0) {
+          await GameRepository.update(gameId, {
+            creatorId: restantes[0].playerId
+          });
+        }
+
+        if (jogador.position === game.currentPlayerPosition && restantes.length > 0) {
+          await this.proximoTurno(gameId);
+        }
+
+        return Result.of({
+          message: "Jogador abandonou a partida",
+          player: playerId
+        });
+      } catch (error) {
+        return Result.fail(error, 500);
+      }
     }
 
     async jogadorDaVez(gameId) {
@@ -363,44 +363,52 @@ class GameService {
     }
 
     async proximoTurno(gameId) {
-        const game = await GameRepository.findById(gameId);
-        const jogadores = await GamePlayerRepository.findByGameId(gameId);
-        console.log(jogadores)
-        const total = jogadores.length;
-        let novaPosicao = game.currentPlayerPosition + game.direction;
-        
-        if (novaPosicao > total) novaPosicao = 1;
-        if (novaPosicao < 1) novaPosicao = total;
+      const game = await GameRepository.findById(gameId);
+      const jogadores = await GamePlayerRepository.findByGameId(gameId);
 
-        await GameRepository.update(gameId, {
-            currentPlayerPosition: novaPosicao
-        });
+      const total = jogadores.length;
+      if (total === 0) {
+        throw new Error("Não há jogadores na partida");
+      }
 
-        this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
+      let novaPosicao = game.currentPlayerPosition + game.direction;
 
-        return {
-            novaPosicao,
-            player: jogadores[novaPosicao - 1]
-        };
+      if (novaPosicao > total) novaPosicao = 1;
+      if (novaPosicao < 1) novaPosicao = total;
+
+      await GameRepository.update(gameId, {
+        currentPlayerPosition: novaPosicao
+      });
+
+      this.addHistory(gameId, "System", `Turn changed to position ${novaPosicao}`);
+
+      const jogadorAtual = await GamePlayerRepository.findByPosition(gameId, novaPosicao);
+
+      return {
+        novaPosicao,
+        player: jogadorAtual
+      };
     }
 
     async aplicarInverter(gameId) {
-        const game = await GameRepository.findById(gameId);
-    
-        // Inverte a direção: 1 vira -1, e -1 vira 1
-        const novaDirecao = game.direction * -1;
-    
-        await GameRepository.update(game, {
-            direction: novaDirecao
-        });
-        
-        this.addHistory(gameId, "System", `Direção de jogo invertida para: ${novaDirecao === 1 ? 'Horário' : 'Anti-horário'}`);
-    
-        // No UNO, se houver apenas 2 jogadores, o Reverse funciona como um Skip
-        const jogadores = await GamePlayerRepository.findByGameId(gameId);
-        if (jogadores.length === 2) {
-            await this.proximoTurno(gameId);
-        }
+      const game = await GameRepository.findById(gameId);
+
+      const novaDirecao = game.direction * -1;
+
+      await GameRepository.update(gameId, {
+        direction: novaDirecao
+      });
+
+      this.addHistory(
+        gameId,
+        "System",
+        `Direção de jogo invertida para: ${novaDirecao === 1 ? "Horário" : "Anti-horário"}`
+      );
+
+      const jogadores = await GamePlayerRepository.findByGameId(gameId);
+      if (jogadores.length === 2) {
+        await this.proximoTurno(gameId);
+      }
     }
 
     async aplicarPular(gameId) {
@@ -417,9 +425,15 @@ class GameService {
     async topoDescarte(gameId) {
       const game = await GameRepository.findById(gameId);
 
-       return await CardService.findById(
-        game.topDiscardCardId
-      );
+      if (!game) {
+        return Result.fail(new Error("Jogo não encontrado"), 404);
+      }
+
+      if (!game.topDiscardCardId) {
+        return Result.fail(new Error("Não existe carta no topo do descarte"), 404);
+      }
+
+      return CardService.findById(game.topDiscardCardId);
     }
 
     async update(id, data, options={}) {
@@ -435,7 +449,7 @@ class GameService {
     async delete(id) {
         try{
             const game = await GameRepository.findById(id);
-            if (!game) Result.fail(new Error("Jogo não encontrado!"), 401);
+            if (!game) return Result.fail(new Error("Jogo não encontrado!"), 401);
             await GameRepository.delete(id);
             return Result.of({mensage: "Jogo removido com sucesso!"})
         }catch(error){
@@ -462,55 +476,94 @@ class GameService {
      *
      * @see CardService.jogarUmaCarta
      */
-    async jogarUmaCarta(gameId, playerId, cardId){
-        // Verifica se o jogo existe
-        const gameResult = await this.findById(gameId)
-        if(!gameResult.ok) return gameResult
+    async jogarUmaCarta(gameId, playerId, cardId) {
+      try {
+        const gameResult = await this.findById(gameId);
+        if (!gameResult.ok) return gameResult;
 
-        if(gameResult.value.status != 'in_progress') return Result.fail("O jogo não está em andamento, você não pode jogar ainda", 400)
+        const game = gameResult.value;
 
-        const jogadorDaVez = await this.jogadorDaVez(gameId)
-        const naoEhJogadorDaVez = jogadorDaVez.playerId !== playerId
-        if(naoEhJogadorDaVez) return Result.fail("Não tente trapacear, você não é o jogador da vez", 400)
+        if (game.status !== "in_progress") {
+          return Result.fail(new Error("O jogo não está em andamento, você não pode jogar ainda"), 400);
+        }
 
-        const top = await this.topoDescarte(gameId)
-        const cardPlay = await CardService.findById(cardId)
-        
-        const validatePlay = CardService.validarJogada(top.value)
-        if(!validatePlay(cardPlay.value)) return Result.fail("A carta jogada não é valida, jogue outra carta", 400)
+        const jogadorDaVez = await this.jogadorDaVez(gameId);
+        if (!jogadorDaVez || Number(jogadorDaVez.playerId) !== Number(playerId)) {
+          return Result.fail(new Error("Não tente trapacear, você não é o jogador da vez"), 400);
+        }
 
-        // Joga a carta na mesa. Se tiver problema, retorna um Result sem ok válido
-        const resultPlayCard = await CardService.jogarUmaCarta(gameResult.value, playerId, cardId)
-        if(!resultPlayCard.ok) return resultPlayCard;
+        const topResult = await this.topoDescarte(gameId);
+        if (!topResult.ok) return topResult;
 
-        // Atualiza o topo da pilha de descarte
-        const updateResult = await this.update ( gameId, { topDiscardCardId: cardId})
-        if(!updateResult.ok) return updateResult
+        const cardResult = await CardService.findById(cardId);
+        if (!cardResult.ok) return cardResult;
 
-        const playedCard = resultPlayCard.value
-        const nextPlayer = await this.proximoTurno(gameId);
+        const validarJogada = CardService.validarJogada(topResult.value);
+        if (!validarJogada(cardResult.value)) {
+          return Result.fail(new Error("A carta jogada não é válida, jogue outra carta"), 400);
+        }
 
-        // Caso seja uma carta especial de bloqueio
-        if (playedCard.value === "skip"){
-            const realNextPlayer = await this.proximoTurno(gameId);
-            return Result.of({
-                "played card": playedCard,
-                "nextPlayerPosition": realNextPlayer.novaPosicao,
-                "nextPlayer": realNextPlayer.player,
-                "skippedPlayer": nextPlayer.player
-            })
-        } 
+        const resultPlayCard = await CardService.jogarUmaCarta(game, playerId, cardId);
+        if (!resultPlayCard.ok) return resultPlayCard;
 
-        if (playedCard.value === "draw2"){
-            await CardService.drawToPlayer(gameId, nextPlayer.player.playerId)
-            await CardService.drawToPlayer(gameId, nextPlayer.player.playerId)
+        await GameRepository.update(gameId, { topDiscardCardId: cardId });
+
+        const playedCard = resultPlayCard.value;
+        this.addHistory(gameId, `Player ${playerId}`, `played ${playedCard.color}-${playedCard.value}`);
+
+        if (playedCard.value === "reverse") {
+          await this.aplicarInverter(gameId);
+        }
+
+        let nextPlayer = await this.proximoTurno(gameId);
+
+        if (playedCard.value === "skip") {
+          const skippedPlayer = nextPlayer.player;
+          nextPlayer = await this.proximoTurno(gameId);
+
+          return Result.of({
+            playedCard,
+            nextPlayerPosition: nextPlayer.novaPosicao,
+            nextPlayer: nextPlayer.player,
+            skippedPlayer
+          });
+        }
+
+        if (playedCard.value === "draw2") {
+          const penalizedPlayer = nextPlayer.player;
+
+          await CardService.drawToPlayer(gameId, penalizedPlayer.playerId);
+          await CardService.drawToPlayer(gameId, penalizedPlayer.playerId);
+
+          nextPlayer = await this.proximoTurno(gameId);
+
+          return Result.of({
+            playedCard,
+            penalizedPlayer,
+            nextPlayerPosition: nextPlayer.novaPosicao,
+            nextPlayer: nextPlayer.player
+          });
+        }
+
+        const handAfterPlay = await this.seePlayerHand(gameId, playerId);
+        if (handAfterPlay.ok && handAfterPlay.value.length === 0) {
+          await GameRepository.update(gameId, { status: "finished" });
+
+          return Result.of({
+            message: "Jogada realizada e a partida foi encerrada",
+            winner: playerId,
+            playedCard
+          });
         }
 
         return Result.of({
-            "played card": playedCard,
-            "nextPlayerPosition": nextPlayer.novaPosicao,
-            "nextPlayer": nextPlayer.player
-        })
+          playedCard,
+          nextPlayerPosition: nextPlayer.novaPosicao,
+          nextPlayer: nextPlayer.player
+        });
+      } catch (error) {
+        return Result.fail(error, 500);
+      }
     }
     
     async obterRankingPartida(gameId) {
@@ -533,45 +586,64 @@ class GameService {
         }
     }
 
-    async comprarSeNaoPuderJogar(gameId, playerId){
-        try{
-            const game = await GameRepository.findById(gameId);
-            if(!game) return Result.fail("O jogo não foi encontrado", 404)
+    async comprarSeNaoPuderJogar(gameId, playerId) {
+      try {
+        const game = await GameRepository.findById(gameId);
 
-            if(game.status !='in_progress') return Result.fail("O jogo não está em andamento, você não pode comprar uma carta", 400)
-            const topoResultado = await this.topoDescarte(gameId);
-            
-            const topo = topoResultado.value;
-
-            const resultadoMao = await this.seePlayerHand(gameId, playerId);
-            if(!resultadoMao.ok) return resultadoMao;
-
-            const mao = resultadoMao.value;
-
-            const podeJogar = CardService.validarJogada(topo);
-
-            const cartaJogavel = mao.find(c => podeJogar(c));
-
-            if (cartaJogavel){
-                return Result.of({message: "Jogador possui carta jogável", podeJogar: true})  
-            }
-
-            const novaCarta = await CardService.drawToPlayer(gameId, playerId);
-
-            if(podeJogar(novaCarta)){
-                return Result.of({message: "Jogador possui carta jogável", carta: novaCarta})
-            }
-            await this.proximoTurno(gameId);
-
-            return Result.of({message:"Carta comprada não é jogável. Turno passado.", carta: novaCarta })
-        } catch(error){
-            return Result.fail(error)
+        if (!game) return Result.fail(new Error("O jogo não foi encontrado"), 404);
+        if (game.status !== "in_progress") {
+          return Result.fail(new Error("O jogo não está em andamento, você não pode comprar uma carta"), 400);
         }
+
+        const jogadorDaVez = await this.jogadorDaVez(gameId);
+        if (!jogadorDaVez || Number(jogadorDaVez.playerId) !== Number(playerId)) {
+          return Result.fail(new Error("Não é a sua vez"), 400);
+        }
+
+        const topoResultado = await this.topoDescarte(gameId);
+        if (!topoResultado.ok) return topoResultado;
+
+        const resultadoMao = await this.seePlayerHand(gameId, playerId);
+        if (!resultadoMao.ok) return resultadoMao;
+
+        const topo = topoResultado.value;
+        const mao = resultadoMao.value;
+        const podeJogar = CardService.validarJogada(topo);
+
+        const cartaJogavel = mao.find((carta) => podeJogar(carta));
+        if (cartaJogavel) {
+          return Result.fail(new Error("Jogador possui carta jogável e não pode comprar"), 400);
+        }
+
+        const novaCarta = await CardService.drawToPlayer(gameId, playerId);
+
+        if (podeJogar(novaCarta)) {
+          return Result.of({
+            message: "Carta comprada. Você pode jogá-la nesta rodada.",
+            canPlay: true,
+            carta: novaCarta
+          });
+        }
+
+        await this.proximoTurno(gameId);
+
+        return Result.of({
+          message: "Carta comprada não é jogável. Turno passado.",
+          canPlay: false,
+          carta: novaCarta
+        });
+      } catch (error) {
+        return Result.fail(error, 500);
+      }
     }
 
     async dizerUno(gameId, playerId) {
-        const mao = await CardService.seePlayerCards(gameId, playerId);
-        if (mao.value.length !== 1) {
+        const maoResult = await CardService.seePlayerCards(gameId, playerId);
+        // Retorna erro caso ocorra um problema na procura por cartas
+        if(!maoResult.ok) return maoResult 
+        
+        const mao = maoResult.value
+        if (mao.length !== 1) {
             return Result.fail("Você só pode dizer UNO quando tiver exatamente 1 carta!", 400);
         }
         
@@ -595,6 +667,17 @@ class GameService {
             return Result.ok({ message: "Desafio aceito! O jogador comprou 2 cartas." });
         }
         return Result.fail("O jogador está seguro ou não tem apenas uma carta.", 400);
+    }
+
+    async reorganizarPosicoes(gameId) {
+      const jogadores = await GamePlayerRepository.findByGameId(gameId);
+
+      for (let i = 0; i < jogadores.length; i += 1) {
+        const novaPosicao = i + 1;
+        if (jogadores[i].position !== novaPosicao) {
+          await GamePlayerRepository.update(jogadores[i], { position: novaPosicao });
+        }
+      }
     }
 }
 

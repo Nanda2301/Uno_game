@@ -162,6 +162,15 @@ class GameController {
             cartaNoTopo: topo
         });
     }
+
+    async dizerUno(req, res, next){
+        const gameId = req.params.gameId
+        const playerId = req.userId
+        const result = await gameService.dizerUno(gameId, playerId)
+
+        if(result.ok) return res.status(result.status).json(result.value);
+        next(result)
+    }
 }
 
 module.exports = new GameController();

@@ -7,27 +7,38 @@ const Result = require("../config/result")
 
 class AuthService {
   async login(email, password) {
-    const result = await findUserByEmail(email);
-    if(!result.ok) return result
+    try{
 
-    const user = result.value
+      if(!email || !password) return Result.fail("E-mail e senha são obrigatórios", 400)
 
-    const senhaValida = await bcrypt.compare(password, user.password);
-    if (!senhaValida) return Result.fail(new Error("Senha inválida"), 401)
+      const result = await findUserByEmail(email);
+      if(!result.ok) return result
 
-    const secret = process.env.JWT_SECRET || "fallback_secret_dev";
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      secret,
-      { expiresIn: "1h" }
-    );
+      const user = result.value
+      const senhaValida = await bcrypt.compare(password, user.password);
+      if (!senhaValida) return Result.fail(new Error("Senha inválida"), 401)
 
-    return Result.of(token)
+      const secret = process.env.JWT_SECRET || "fallback_secret_dev";
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        secret,
+        { expiresIn: "1h" }
+      );
+
+      return Result.of(token)
+    }catch(err){
+      return Result.fail(err, 500)
+    }
   }
 
   async logout(token) {
-    await TokenBlacklist.create({ token });
-    return { message: "Logout realizado com sucesso" };
+    try{
+      if(!token) return Result.fail("Token não informado", 400);
+      await TokenBlacklist.create({token})
+      return Result.of({ message: "Logout realizado com sucesso" });
+    }catch(err){
+      return Result.fail(err, 500);
+    }
   }
 }
 

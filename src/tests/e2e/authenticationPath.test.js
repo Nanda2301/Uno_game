@@ -1,76 +1,61 @@
-const userUrl = "http://localhost:3000/api/users"
-const aboutMeUrl = "http://localhost:3000/api/users/me"
+// 🚨 PRESTA ATENÇÃO AQUI CRIATURA 🚨
+//  Para que esses testes funcionem é preciso que o servidor esteja rodando
+//  então lembra de dar o "npm run dev" ai
+
+const {requestCreateUser, requestToken, requestAboutMe, requestDeleteUser, requestLogout} = require("./usefulRequests")
+
+const USER_1_DATA = {
+    userName: "USER COUNT TEST 0001",
+    name: "USER TEST 1",
+    email: "USERTEST1@gmail.com",
+    password: "test123"      
+}
+
+const USER_2_DATA = {
+    userName: "USER COUNT TEST 0002",
+    name: "USER TEST 2",
+    email: "USERTEST2@gmail.com",
+    password: "test123"
+}
 
 describe("Criação dos usuários", ()=>{
 
     it("Criação do usuário 1", async ()=>{
-        const user1 = {
-            userName: "Miquéias Ferreira Dos Santos",
-            name: "MiqueiasF",
-            email: "miqueias@gmail.com",
-            password: "miqueias123"      
-        }
-        const response = await fetch(userUrl, {
-            method: "POST",
-            headers:{
-                "Content-type": "application/json"
-            },
-            body: JSON.stringify(user1)
-        })
+        const response = await requestCreateUser(USER_1_DATA)
         expect(response.ok).toBe(true)
         expect(response.status).toBe(201)
     })
     
     it("Criação do usuário 2", async ()=>{
-        const user2 = {
-            "userName": "Lara Matos Aguirres",
-            "name": "Lara",
-            "email": "lara@gmail.com",
-            "password": "lara123"
-        }
-        const response = await fetch(userUrl, {
-            method: "POST",
-            headers:{
-                "Content-type": "application/json"
-            },
-            body: JSON.stringify(user2)
-        })
-
+        const response = await requestCreateUser(USER_2_DATA)
         expect(response.ok).toBe(true)
         expect(response.status).toBe(201)
     })
 })
 
+
 let tokenUser1;
 let tokenUser2;
-describe("Autenticação do usuário", ()=>{    
-    beforeAll(async ()=>{
-        const loginUrl = "http://localhost:3000/api/users/login"
+let user1Id;
+let user2Id;
 
+describe("Login do usuário", ()=>{    
+    beforeAll(async () =>{
         const credenciais_usuario_1 = {
-            email: "miqueias@gmail.com",
-            password: "miqueias123"      
+            email: USER_1_DATA.email,
+            password: USER_1_DATA.password      
         }
         const credenciais_usuario_2 = {
-            "email": "lara@gmail.com",
-            "password": "lara123"
+            email: USER_2_DATA.email,
+            password: USER_2_DATA.password
         }
 
-        const responseToken1 = await fetch(loginUrl, {
-            method: "POST",
-            headers:{ "Content-type": "application/json" },
-            body: JSON.stringify(credenciais_usuario_1)
-        })
-        const responseToken2 = await fetch(loginUrl, {
-            method: "POST",
-            headers:{ "Content-type": "application/json" },
-            body: JSON.stringify(credenciais_usuario_2)
-        })
-
+        const responseToken1 = await requestToken(credenciais_usuario_1)
         expect(responseToken1.ok).toBe(true)
-        expect(responseToken2.ok).toBe(true)
-
         tokenUser1 = (await responseToken1.json()).token
+
+        const responseToken2 = await requestToken(credenciais_usuario_2)
+        expect(responseToken2.ok).toBe(true)
         tokenUser2 = (await responseToken2.json()).token
     })
 
@@ -83,26 +68,57 @@ describe("Autenticação do usuário", ()=>{
     })
 
     it("About-me do usuário 1", async()=>{
-        const responseAboutMe = await fetch(aboutMeUrl, {
-            method: "GET",
-            headers:{
-                "Authorization": `Bearer ${tokenUser1}`
-            }
-        })
-
+        const responseAboutMe = await requestAboutMe(tokenUser1)
         expect(responseAboutMe.ok).toBe(true)
         expect(responseAboutMe.status).toBe(200)
+
+        const bodyResult = await responseAboutMe.json()
+        user1Id = bodyResult.id
     })
 
     it("About-me do usuário 2", async()=>{
-        const responseAboutMe = await fetch(aboutMeUrl, {
-            method: "GET",
-            headers:{
-                "Authorization": `Bearer ${tokenUser2}`
-            }
-        })
-
+        const responseAboutMe = await requestAboutMe(tokenUser2)
         expect(responseAboutMe.ok).toBe(true)
         expect(responseAboutMe.status).toBe(200)
+
+        const body = await responseAboutMe.json()
+        user2Id = body.id
+    })
+})
+
+describe("Clear data user", ()=>{
+    it("Delete user 1 data", async ()=>{
+        expect(user1Id).toBeDefined();
+        expect(tokenUser1).toBeDefined()
+
+        const response = await requestDeleteUser(user1Id, tokenUser1)
+        expect(response.ok).toBe(true);
+        expect(response.status).toBe(200)
+    })
+
+    it("Delete user 2 data", async ()=>{
+        expect(user2Id).toBeDefined();
+        expect(tokenUser2).toBeDefined()
+
+        const response = await requestDeleteUser(user2Id, tokenUser2)
+        expect(response.ok).toBe(true);
+        expect(response.status).toBe(200)
+    })
+})
+
+describe("Logout do usuário", ()=>{
+
+    it("Usuário 1 fez logout com sucesso!", async()=>{
+        expect(tokenUser1).toBeDefined()
+        const result = await requestLogout(tokenUser1);
+        expect(result.ok).toBe(true)
+        expect(result.status).toBe(200)
+    })
+
+    it("Usuário 2 fez logout com sucesso!", async()=>{
+        expect(tokenUser2).toBeDefined()
+        const result = await requestLogout(tokenUser2);
+        expect(result.ok).toBe(true)
+        expect(result.status).toBe(200)
     })
 })

@@ -1,28 +1,26 @@
 const express = require("express");
 const gameController = require("../controllers/GameController");
-const authMiddlewares = require("../middlewares/auth.middleware.js");
-const errorMiddleware = require("../middlewares/errorMiddleware.js")
+const authMiddleware = require("../middlewares/auth.middleware.js");
+
 const router = express.Router();
 
-// error 
-router.get("/:id/myhand", authMiddlewares, gameController.seePlayerHand, errorMiddleware)
+router.post("/", authMiddleware, gameController.create);
+router.get("/", authMiddleware, gameController.findAll);
+router.get("/:id", authMiddleware, gameController.getById);
+router.put("/:id", authMiddleware, gameController.update);
+router.delete("/:id", authMiddleware, gameController.delete);
 
-// Rotas básicas CRUD
-router.post("/",authMiddlewares, gameController.create);
-router.get("/",authMiddlewares, gameController.findAll);
-router.get("/:id",authMiddlewares, gameController.getById);
-router.put("/:id",authMiddlewares, gameController.update);
-router.delete("/:id",authMiddlewares, gameController.delete);
+router.post("/:id/join", authMiddleware, gameController.adicionarJogador);
+router.post("/:id/ready", authMiddleware, gameController.marcarPronto);
+router.post("/:id/start", authMiddleware, gameController.iniciarJogo);
+router.post("/:id/finish", authMiddleware, gameController.finalizarJogo);
+router.post("/:id/play", authMiddleware, gameController.jogarUmaCarta);
+router.post("/:id/comprar", authMiddleware, gameController.comprarSeNaoPuderJogar);
+router.post("/:id/leave", authMiddleware, gameController.abandonarjogo);
 
-// Novas rotas de gerenciamento de partida
-router.post("/:id/join",authMiddlewares, gameController.adicionarJogador);     // Entrar na partida
-router.post("/:id/ready",authMiddlewares, gameController.marcarPronto);         // Marcar como pronto
-router.post("/:id/start",authMiddlewares, gameController.iniciarJogo);          // Iniciar jogo (criador + todos prontos)
-router.post("/:id/finish",authMiddlewares, gameController.finalizarJogo);       // Finalizar jogo (apenas criador)
-router.post("/:id/play", authMiddlewares, gameController.jogarUmaCarta);
-router.post("/:id/comprar", authMiddlewares, gameController.comprarSeNaoPuderJogar);
-router.post("/:id/leave_game", authMiddlewares, gameController.abandonarjogo);
-router.get('/:id/history',authMiddlewares, gameController.getHistory);
-router.get('/:id/ranking', gameController.obterRanking);
+router.get("/:id/myhand", authMiddleware, gameController.seePlayerHand);
+router.get("/:id/history", authMiddleware, gameController.getHistory);
+router.get("/:id/ranking", authMiddleware, gameController.obterRanking);
+router.get("/:id/state", authMiddleware, gameController.getEstadoAtual);
 
 module.exports = router;
