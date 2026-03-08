@@ -133,7 +133,7 @@ class APIUsageLogService{
             return Result.of(data)
 
         }catch(erro){
-            return Result.fail(error)
+            return Result.fail(erro)
         }
     }
 
