@@ -1,5 +1,6 @@
 const GameService = require("../services/GameService");
 const gameService = require("../services/GameService");
+const { getIO } = require("../sockets/socket");
 
 class GameController {
 
@@ -38,29 +39,52 @@ class GameController {
         next(result)
     }
 
-    async adicionarJogador(req, res, next) {
-        const gameId = req.params.id;
-        const playerId = req.userId;
+   async adicionarJogador(req, res, next) {
+       const gameId = req.params.id;
+       const playerId = req.userId;
 
-        const result = await gameService.adicionarJogador(gameId, playerId);
-        if(result.ok) return res.status(result.status).json(result.value);
-        next(result)
+       const result = await gameService.adicionarJogador(gameId, playerId);
+
+       if (result.ok) {
+          // Obtendo a instância do Socket.io
+          const io = getIO();
+
+          // Emitindo o evento para a sala específica do jogo
+          io.to(`game-${gameId}`).emit("playerJoined", {
+              gameId,
+              playerId
+            });
+
+            return res.status(result.status).json(result.value);
+        }
+
+        next(result);
     }
 
     async marcarPronto(req, res, next) {
         const gameId = req.params.id;
         const playerId = req.userId || req.body.playerId;
         const result = await gameService.marcarPronto(gameId, playerId);
-        if(result.ok) return res.status(result.status).json(result.value);
-        next(result)
+    
+        if(result.ok) {
+            // Notifica a sala que alguém mudou o status de pronto
+            getIO().to(`game-${gameId}`).emit("playerReady", { playerId });
+            return res.status(result.status).json(result.value);
+        }
+        next(result);
     }
 
     async iniciarJogo(req, res, next) {
         const gameId = req.params.id;
         const userId = req.userId || req.body.userId;
         const result = await gameService.iniciarJogo(gameId, userId);
-        if(result.ok) return res.status(result.status).json(result.value);
-        next(result)
+    
+        if(result.ok) {
+            // ESSENCIAL: Notifica todos que o jogo começou para mudarem de tela
+            getIO().to(`game-${gameId}`).emit("gameStarted", { status: "in_progress" });
+            return res.status(result.status).json(result.value);
+        }
+        next(result);
     }
 
     async finalizarJogo(req, res, next) {
