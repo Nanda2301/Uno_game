@@ -74,50 +74,78 @@ class GameService {
     }
 
     async create(gameData, creatorId) {
-        // << PODEMOS ADINCIONAR UMA TRANSACTION NESSE METODO  >>
-        try{
-            const player = await UserRepository.findById(creatorId)
-            if(!player) return Result.fail(new Error("Jogador não existe!"), 404);
+      try{
+        
+        const player = await UserRepository.findById(creatorId)
 
-            // Cria o jogo no banco
-            const game = await GameRepository.create({
-                ...gameData,
-                creatorId,
-                status: 'waiting'
-            });
+        if(!player)
+          return Result.fail(new Error("Jogador não existe!"), 404)
 
-            // Adiciona o criador como primeiro jogador
-            await GamePlayerRepository.create({
-                gameId: game.id,
-                playerId: creatorId,
-                ready: true, // Criador já entra pronto
-                position: 1
-            });
+        const maxPlayers = gameData.maxPlayers || 4
 
-            const data = {
-                playerId: creatorId, 
-                gameId: game.id,
-                score: 0
-            }
+        const game = await GameRepository.create({
+            ...gameData,
+            maxPlayers,
+            creatorId,
+            status: 'waiting'
+        })
 
-            const resultScore = await ScoreService.create(data)
-            if(!resultScore.ok) return 
+        await GamePlayerRepository.create({
+            gameId: game.id,
+            playerId: creatorId,
+            ready: true,
+            position: 1
+        })
 
-            // Gera o baralho de 108 cartas
-            await CardService.createDeck(game.id);
-            return Result.ok(game, 201)
-        }catch(error){
-            return Result.fail(error)
+        const data = {
+            playerId: creatorId,
+            gameId: game.id,
+            score: 0
         }
+
+        const resultScore = await ScoreService.create(data)
+
+        if(!resultScore.ok)
+            return Result.fail(resultScore.error)
+
+        await CardService.createDeck(game.id)
+
+        return Result.ok(game, 201)
+
+    }catch(error){
+
+      return Result.fail(error)
+
     }
+  }
 
     async findAll() {
-        try{
-            const games = await GameRepository.findAll();
-            return Result.of(games)
-        }catch(error){
-            return Result.fail(error)
-        }
+      
+      try{
+        
+        const games = await GameRepository.findAll()
+
+        const gamesWithPlayers = await Promise.all(
+          
+          games.map(async (game)=>{
+            
+            const players = 
+                await GamePlayerRepository.findByGameId(game.id)
+
+            return {
+              ...game,
+              players
+            }
+          })
+        )
+        
+        return Result.of(gamesWithPlayers)
+      
+      }catch(error){
+        
+        return Result.fail(error)
+      }
+
     }
 
     async findById(id) {
